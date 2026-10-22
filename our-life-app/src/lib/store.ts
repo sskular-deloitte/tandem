@@ -57,6 +57,15 @@ export async function updateItem(
   return updated;
 }
 
+export async function resetAll(): Promise<void> {
+  if (redis) {
+    await redis.del(ITEMS_HASH_KEY, ONBOARDING_KEY);
+    return;
+  }
+  memory.items.clear();
+  memory.onboarding = {};
+}
+
 export async function getOnboarding(): Promise<OnboardingState> {
   if (redis) {
     const raw = await redis.get<OnboardingState>(ONBOARDING_KEY);

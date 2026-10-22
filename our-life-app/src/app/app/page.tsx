@@ -74,6 +74,17 @@ export default function AppPage() {
                 Check-in
               </Button>
             </Link>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={async () => {
+                if (!confirm("Reset all demo data for both William and Sam?")) return;
+                await fetch("/api/reset", { method: "POST" });
+                refresh();
+              }}
+            >
+              Reset demo
+            </Button>
             <Button size="sm" variant="ghost" onClick={() => { clearUserId(); router.push("/"); }}>
               Switch
             </Button>
