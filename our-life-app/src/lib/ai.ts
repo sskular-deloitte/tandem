@@ -30,18 +30,29 @@ function buildFallback(text: string): AiSuggestion {
   };
 }
 
+// The org's Pulse proxy translates requests to Vertex AI under the hood and
+// expects the anthropic-version header to match the body's internal
+// vertex-xxxx version rather than a standard Anthropic API date version -
+// otherwise every call fails with a 400 version-mismatch error. The
+// ANTHROPIC_MODEL env var (e.g. "opusplan") is a Claude-Code-specific model
+// alias, not a real Messages API model name, so it is intentionally not
+// used here.
+const MODEL = "claude-sonnet-latest";
+const VERTEX_ANTHROPIC_VERSION = "vertex-2023-10-16";
+
 export async function structureEntry(text: string): Promise<AiSuggestion> {
   const baseURL = process.env.ANTHROPIC_BASE_URL;
   const authToken = process.env.ANTHROPIC_AUTH_TOKEN;
-  const model = process.env.ANTHROPIC_MODEL || "claude-3-5-sonnet-20241022";
 
   if (!authToken) {
+    console.error("AI structuring skipped: ANTHROPIC_AUTH_TOKEN is not set");
     return buildFallback(text);
   }
 
   const client = new Anthropic({
     apiKey: authToken,
     baseURL: baseURL || undefined,
+    defaultHeaders: { "anthropic-version": VERTEX_ANTHROPIC_VERSION },
   });
 
   try {
@@ -50,7 +61,7 @@ export async function structureEntry(text: string): Promise<AiSuggestion> {
 
     const response = await client.messages.create(
       {
-        model,
+        model: MODEL,
         max_tokens: 500,
         system: SYSTEM_PROMPT,
         messages: [{ role: "user", content: text }],
@@ -89,7 +100,8 @@ export async function structureEntry(text: string): Promise<AiSuggestion> {
       ),
       isFallback: false,
     };
-  } catch {
+  } catch (err) {
+    console.error("AI structuring failed, using fallback:", err);
     return buildFallback(text);
   }
 }
