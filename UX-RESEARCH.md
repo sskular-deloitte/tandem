@@ -1,6 +1,6 @@
 # UX Research Summary
 
-**Project:** Mental Load Assistant (PoC) — working name "Our Life"
+**Project:** Mental Load Assistant (PoC) — "Tandem"
 **Date:** 2026-10-22
 **Prepared by:** Requirements Elicitation Skill (CPUX)
 

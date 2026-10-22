@@ -6,8 +6,8 @@ import type { Item, OnboardingState } from "./types";
 // touch their own field (HSET), avoiding the race condition of a
 // read-whole-array -> modify -> write-whole-array pattern where one
 // request's write can silently clobber another's.
-const ITEMS_HASH_KEY = "our-life:items";
-const ONBOARDING_KEY = "our-life:onboarding";
+const ITEMS_HASH_KEY = "tandem:items";
+const ONBOARDING_KEY = "tandem:onboarding";
 
 const hasUpstash = Boolean(
   process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN

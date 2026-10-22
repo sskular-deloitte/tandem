@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import type { UserId } from "./types";
 
-const KEY = "our-life:identity";
+const KEY = "tandem:identity";
 
 export function useIdentity() {
   const [userId, setUserIdState] = useState<UserId | null>(null);

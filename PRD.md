@@ -1,6 +1,6 @@
 # Product Requirements Document
 
-**Project:** Mental Load Assistant (PoC) — working name "Our Life"
+**Project:** Mental Load Assistant (PoC) — "Tandem"
 **Version:** 1.0
 **Date:** 2026-10-22
 **Prepared by:** Requirements Elicitation Skill

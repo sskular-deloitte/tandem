@@ -10,7 +10,7 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Our Life — shared mental load",
+  title: "Tandem — shared mental load",
   description: "Get it out of your head. Make it visible. Work it out together.",
 };
 

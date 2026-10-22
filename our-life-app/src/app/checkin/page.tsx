@@ -215,7 +215,7 @@ export default function CheckinPage() {
                 className="btn btn-primary"
                 onClick={() => router.push("/app")}
               >
-                Back to Our Life
+                Back to Tandem
               </button>
             </div>
           )}

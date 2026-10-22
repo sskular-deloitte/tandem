@@ -38,7 +38,7 @@ export default function HomePage() {
       <div className="w-full max-w-[560px] text-center">
         <div className="flex items-center justify-center gap-2 mb-6 text-[var(--accent)]">
           <Icon name="spa" size={22} filled />
-          <span className="font-semibold text-[var(--text)]">Our Life</span>
+          <span className="font-semibold text-[var(--text)]">Tandem</span>
         </div>
         <div className="eyebrow">Welcome back</div>
         <h1 className="page-title">Who&apos;s using this?</h1>
