@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { updateItem } from "@/lib/store";
+import { getItem, updateItem } from "@/lib/store";
 import type {
   Item,
   ItemState,
@@ -7,10 +7,17 @@ import type {
   UserId,
 } from "@/lib/types";
 
+type EditableFields = {
+  outcome: string;
+  nextStep: string;
+  suggestedDate: string;
+};
+
 type Action =
   | { type: "share" }
   | { type: "respond"; response: OwnershipResponse; respondingUser: UserId }
-  | { type: "resolve"; note: string };
+  | { type: "resolve"; note: string }
+  | { type: "edit"; updates: EditableFields };
 
 function applyOwnershipResponse(
   item: Item,
@@ -58,6 +65,21 @@ export async function PATCH(
     );
   } else if (action.type === "resolve") {
     updates = { state: "resolved", resolutionNote: action.note };
+  } else if (action.type === "edit") {
+    const existing = await getItem(id);
+    if (!existing) {
+      return NextResponse.json({ error: "not found" }, { status: 404 });
+    }
+    updates = {
+      ai: existing.ai
+        ? { ...existing.ai, ...action.updates }
+        : {
+            ...action.updates,
+            suggestedOwner: "not_agreed",
+            neutralShareText: action.updates.outcome,
+            isFallback: false,
+          },
+    };
   }
 
   const item = await updateItem(id, updates);

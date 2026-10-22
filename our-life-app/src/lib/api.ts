@@ -42,6 +42,19 @@ export async function shareItem(id: string): Promise<Item> {
   return data.item as Item;
 }
 
+export async function editItem(
+  id: string,
+  updates: { outcome: string; nextStep: string; suggestedDate: string }
+): Promise<Item> {
+  const res = await fetch(`/api/items/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ type: "edit", updates }),
+  });
+  const data = await res.json();
+  return data.item as Item;
+}
+
 export async function respondToItem(
   id: string,
   response: OwnershipResponse,

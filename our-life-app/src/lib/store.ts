@@ -31,6 +31,14 @@ export async function getAllItems(): Promise<Item[]> {
   return Array.from(memory.items.values());
 }
 
+export async function getItem(id: string): Promise<Item | null> {
+  if (redis) {
+    const item = await redis.hget<Item>(ITEMS_HASH_KEY, id);
+    return item ?? null;
+  }
+  return memory.items.get(id) ?? null;
+}
+
 export async function addItem(item: Item): Promise<void> {
   if (redis) {
     await redis.hset(ITEMS_HASH_KEY, { [item.id]: item });

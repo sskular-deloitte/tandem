@@ -3,12 +3,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useIdentity } from "@/lib/useIdentity";
-import { fetchItems, respondToItem } from "@/lib/api";
+import { editItem, fetchItems, respondToItem, shareItem } from "@/lib/api";
 import type { Item, ItemState, OwnershipResponse } from "@/lib/types";
-import { USER_AVATAR_CLASS, USER_INITIAL, USER_LABELS } from "@/lib/types";
+import { USER_AVATAR_CLASS, USER_INITIAL, USER_LABELS, otherUser } from "@/lib/types";
 import { ItemCard } from "@/components/ItemCard";
-import { NegotiationSheet } from "@/components/NegotiationSheet";
-import { ResolvedModal } from "@/components/ResolvedModal";
+import { ItemDetailSheet } from "@/components/ItemDetailSheet";
 import { useToast } from "@/components/Toast";
 import { BottomNav } from "@/components/BottomNav";
 
@@ -33,8 +32,7 @@ export default function AppPage() {
   const toast = useToast();
   const [items, setItems] = useState<Item[]>([]);
   const [mountedAt, setMountedAt] = useState<number | null>(null);
-  const [negotiatingItem, setNegotiatingItem] = useState<Item | null>(null);
-  const [resolvedItem, setResolvedItem] = useState<Item | null>(null);
+  const [openItem, setOpenItem] = useState<Item | null>(null);
 
   const refresh = useCallback(async () => {
     if (!userId) return;
@@ -61,17 +59,24 @@ export default function AppPage() {
 
   if (!loaded || !userId) return null;
 
-  function handleCardClick(item: Item) {
-    if (item.state === "needs_agreement") {
-      setNegotiatingItem(item);
-    } else if (item.state === "resolved") {
-      setResolvedItem(item);
-    }
+  const currentUserId = userId;
+
+  async function handleSaveEdit(updates: { outcome: string; nextStep: string; suggestedDate: string }) {
+    if (!openItem) return;
+    await editItem(openItem.id, updates);
+    refresh();
+  }
+
+  async function handleShare() {
+    if (!openItem) return;
+    await shareItem(openItem.id);
+    toast(`Shared with ${USER_LABELS[otherUser(currentUserId)]}.`);
+    refresh();
   }
 
   async function handleRespond(response: OwnershipResponse) {
-    if (!negotiatingItem || !userId) return;
-    await respondToItem(negotiatingItem.id, response, userId);
+    if (!openItem) return;
+    await respondToItem(openItem.id, response, currentUserId);
     if (response === "take" || response === "together") {
       toast("Agreed — moved to Agreed/Planned.");
     } else if (response === "discuss") {
@@ -140,11 +145,7 @@ export default function AppPage() {
                   key={item.id}
                   item={item}
                   justAdded={mountedAt !== null && item.createdAt > mountedAt}
-                  onClick={
-                    item.state === "needs_agreement" || item.state === "resolved"
-                      ? () => handleCardClick(item)
-                      : undefined
-                  }
+                  onClick={() => setOpenItem(item)}
                 />
               ))}
             </div>
@@ -152,15 +153,15 @@ export default function AppPage() {
         })}
       </div>
 
-      {negotiatingItem && (
-        <NegotiationSheet
-          item={negotiatingItem}
+      {openItem && (
+        <ItemDetailSheet
+          item={openItem}
+          otherLabel={USER_LABELS[otherUser(currentUserId)]}
+          onSave={handleSaveEdit}
+          onShare={handleShare}
           onRespond={handleRespond}
-          onClose={() => setNegotiatingItem(null)}
+          onClose={() => setOpenItem(null)}
         />
-      )}
-      {resolvedItem && (
-        <ResolvedModal item={resolvedItem} onClose={() => setResolvedItem(null)} />
       )}
       <BottomNav />
     </main>
