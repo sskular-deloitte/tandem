@@ -400,11 +400,14 @@ button {
 }
 
 /* ---------- Capture ---------- */
+.capture-input-wrap {
+  position: relative;
+}
 .capture-input {
   width: 100%;
   border: none;
   border-radius: var(--radius);
-  padding: 26px 24px;
+  padding: 26px 64px 26px 24px;
   font-family: inherit;
   font-size: 19px;
   font-weight: 600;
@@ -424,6 +427,47 @@ button {
 .capture-input::placeholder {
   color: #b7a999;
   font-weight: 600;
+}
+.mic-btn {
+  position: absolute;
+  right: 14px;
+  bottom: 18px;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: none;
+  background: var(--grey-pill);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    transform 0.15s ease;
+}
+.mic-btn:hover {
+  background: var(--accent-soft);
+  transform: translateY(-1px);
+}
+.mic-btn.listening {
+  background: var(--accent);
+  color: #fff;
+  animation: pulseGlow 1.4s ease infinite;
+}
+.mic-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--accent-dark);
+  font-weight: 700;
+}
+.mic-hint .think-dots span {
+  background: var(--accent);
+}
+.mic-error {
+  color: var(--text-soft);
 }
 .hint {
   text-align: center;

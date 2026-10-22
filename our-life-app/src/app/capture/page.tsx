@@ -4,6 +4,7 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useIdentity } from "@/lib/useIdentity";
 import { createItem, structureText } from "@/lib/api";
+import { useSpeechToText } from "@/lib/useSpeechToText";
 import type { AiSuggestion, SuggestedOwner } from "@/lib/types";
 import { USER_LABELS, otherUser } from "@/lib/types";
 import { Icon } from "@/components/Icon";
@@ -46,6 +47,12 @@ function CaptureWizard() {
   const [saving, setSaving] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  const speech = useSpeechToText({
+    onResult: (transcript) => {
+      setText((prev) => (prev && !prev.endsWith(" ") ? prev + " " : prev) + transcript);
+    },
+  });
+
   useEffect(() => {
     if (loaded && !userId) {
       router.replace("/");
@@ -59,6 +66,7 @@ function CaptureWizard() {
 
   function handleSave() {
     if (!text.trim()) return;
+    if (speech.listening) speech.stop();
     setStep("share");
   }
 
@@ -96,21 +104,49 @@ function CaptureWizard() {
               </div>
               <h1 className="page-title">What&apos;s on your mind?</h1>
             </div>
-            <textarea
-              ref={textareaRef}
-              autoFocus
-              rows={3}
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSave();
-                }
-              }}
-              placeholder="e.g. the boiler is making a noise..."
-              className="capture-input"
-            />
+            <div className="capture-input-wrap">
+              <textarea
+                ref={textareaRef}
+                autoFocus
+                rows={3}
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSave();
+                  }
+                }}
+                placeholder="e.g. the boiler is making a noise..."
+                className="capture-input"
+              />
+              {speech.supported && (
+                <button
+                  type="button"
+                  className={`mic-btn ${speech.listening ? "listening" : ""}`}
+                  onClick={() => (speech.listening ? speech.stop() : speech.start())}
+                  aria-label={speech.listening ? "Stop voice input" : "Start voice input"}
+                  aria-pressed={speech.listening}
+                >
+                  <Icon name={speech.listening ? "stop" : "mic"} size={20} filled={speech.listening} />
+                </button>
+              )}
+            </div>
+            {speech.listening && (
+              <p className="hint mic-hint">
+                <span className="think-dots">
+                  <span />
+                  <span />
+                  <span />
+                </span>
+                Listening...
+              </p>
+            )}
+            {speech.error && (
+              <p className="hint mic-error">
+                Couldn&apos;t hear you — you can still type instead.
+              </p>
+            )}
             <div className="flex justify-center mt-5">
               <button
                 className="btn btn-primary"
@@ -122,7 +158,7 @@ function CaptureWizard() {
             </div>
             <p className="hint">
               No category, deadline, or owner needed. Just get it out of your
-              head.
+              head{speech.supported ? ", by typing or speaking" : ""}.
             </p>
           </>
         )}
