@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { useIdentity } from "@/lib/useIdentity";
 import { fetchItems, respondToItem } from "@/lib/api";
 import type { Item, ItemState, OwnershipResponse } from "@/lib/types";
@@ -100,12 +99,18 @@ export default function AppPage() {
             </div>
           </div>
           <div className="flex gap-2.5 flex-wrap justify-end">
-            <Link href="/capture">
-              <button className="btn btn-ghost btn-sm">+ New</button>
-            </Link>
-            <Link href="/checkin">
-              <button className="btn btn-primary btn-sm">Start check-in</button>
-            </Link>
+            <button
+              className="btn btn-ghost btn-sm"
+              onClick={() => router.push(`/capture?n=${Date.now()}`)}
+            >
+              + New
+            </button>
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={() => router.push("/checkin")}
+            >
+              Start check-in
+            </button>
             <button
               className="btn btn-ghost btn-sm"
               onClick={async () => {

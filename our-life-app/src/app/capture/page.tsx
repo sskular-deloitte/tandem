@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useIdentity } from "@/lib/useIdentity";
 import { createItem, structureText } from "@/lib/api";
 import type { AiSuggestion, SuggestedOwner } from "@/lib/types";
@@ -16,7 +16,24 @@ const OWNER_OPTIONS: { value: SuggestedOwner; label: (other: string) => string }
   { value: "not_agreed", label: () => "Not agreed" },
 ];
 
+// Next.js's client router cache can reuse an already-mounted /capture
+// instance when navigating to it again, which would otherwise leave stale
+// text/suggestion state from the previous capture. Keying the wizard on a
+// query param that changes on every "+ New" click forces a fresh mount.
 export default function CapturePage() {
+  return (
+    <Suspense fallback={null}>
+      <CapturePageInner />
+    </Suspense>
+  );
+}
+
+function CapturePageInner() {
+  const searchParams = useSearchParams();
+  return <CaptureWizard key={searchParams.get("n") ?? "default"} />;
+}
+
+function CaptureWizard() {
   const router = useRouter();
   const { userId, loaded } = useIdentity();
   const [step, setStep] = useState<Step>("write");
