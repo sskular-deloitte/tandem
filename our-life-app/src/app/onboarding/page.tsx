@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { useIdentity } from "@/lib/useIdentity";
 import { ONBOARDING_QUESTIONS } from "@/lib/onboardingQuestions";
 import { BottomNav } from "@/components/BottomNav";
@@ -61,6 +62,15 @@ export default function OnboardingPage() {
   return (
     <main className="min-h-screen flex items-center justify-center px-5 py-16 pb-28">
       <div className="w-full max-w-[560px]">
+        {step === 0 && (
+          <Image
+            src="/brand/planning-together.webp"
+            alt=""
+            width={900}
+            height={506}
+            className="brand-inline"
+          />
+        )}
         <div className="ob-dots">
           {ONBOARDING_QUESTIONS.map((q, i) => (
             <div key={q.key} className={`ob-dot ${i <= step ? "on" : ""}`} />

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { useIdentity } from "@/lib/useIdentity";
 import { fetchItems, respondToItem, resolveItem } from "@/lib/api";
 import type { Item, OwnershipResponse } from "@/lib/types";
@@ -201,9 +202,14 @@ export default function CheckinPage() {
 
           {isDone && (
             <div className="card ci-card text-center">
-              <div className="summary-badge">
-                <Icon name="spa" size={42} filled />
-              </div>
+              <Image
+                src="/brand/arrived-together.webp"
+                alt=""
+                width={900}
+                height={506}
+                className="brand-inline"
+                style={{ maxWidth: 200, marginBottom: 10 }}
+              />
               <h3 className="text-xl font-bold mb-2">
                 You reviewed {reviewed} thing{reviewed === 1 ? "" : "s"} together
               </h3>
