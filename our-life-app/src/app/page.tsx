@@ -1,7 +1,6 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { useIdentity } from "@/lib/useIdentity";
 import type { UserId } from "@/lib/types";
 import { useEffect } from "react";
@@ -37,14 +36,6 @@ export default function HomePage() {
   return (
     <main className="min-h-screen flex items-center justify-center px-5 py-16">
       <div className="w-full max-w-[560px] text-center">
-        <Image
-          src="/brand/tandem-clear.webp"
-          alt=""
-          width={900}
-          height={506}
-          priority
-          className="brand-hero"
-        />
         <div className="flex items-center justify-center gap-2 mb-6 text-[var(--accent)]">
           <Icon name="spa" size={22} filled />
           <span className="font-semibold text-[var(--text)]">Tandem</span>

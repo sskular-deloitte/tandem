@@ -2,7 +2,6 @@
 
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Image from "next/image";
 import { useIdentity } from "@/lib/useIdentity";
 import { createItem, structureText } from "@/lib/api";
 import { useSpeechToText } from "@/lib/useSpeechToText";
@@ -137,14 +136,6 @@ function CaptureWizard() {
 
         {step === "thinking" && (
           <>
-            <Image
-              src="/brand/thinking-alone.webp"
-              alt=""
-              width={900}
-              height={506}
-              className="brand-inline"
-              style={{ maxWidth: 220 }}
-            />
             <div className="eyebrow text-center">Turning that into a plan</div>
             <div className="card quote-card">&ldquo;{text}&rdquo;</div>
             <div className="flex items-center gap-2.5 justify-center py-10 text-[var(--text-soft)] font-bold">

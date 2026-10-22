@@ -304,30 +304,6 @@ button {
   animation: fadeSlideUp 0.5s ease forwards;
 }
 
-/* ---------- Brand illustrations ---------- */
-/* The source illustrations sit on a warm cream card (#eee6d6); the mask
-   fades their edges out and multiply-blend lets that cream settle into the
-   page background instead of showing a hard rectangle. */
-.brand-hero {
-  width: 100%;
-  max-width: 340px;
-  height: auto;
-  margin: 0 auto 18px;
-  display: block;
-  mix-blend-mode: multiply;
-  -webkit-mask-image: radial-gradient(ellipse 72% 68% at center, #000 55%, transparent 100%);
-  mask-image: radial-gradient(ellipse 72% 68% at center, #000 55%, transparent 100%);
-}
-.brand-inline {
-  width: 100%;
-  max-width: 220px;
-  height: auto;
-  margin: 0 auto 14px;
-  display: block;
-  mix-blend-mode: multiply;
-  opacity: 0.92;
-}
-
 /* ---------- Identity ---------- */
 .id-card {
   width: 190px;
@@ -725,19 +701,6 @@ button {
   font-style: italic;
   padding: 4px 2px 2px;
 }
-.empty-note-row {
-  text-align: center;
-  padding: 6px 0 18px;
-}
-.empty-note-image {
-  width: 100%;
-  max-width: 160px;
-  height: auto;
-  margin: 0 auto 6px;
-  display: block;
-  mix-blend-mode: multiply;
-  opacity: 0.85;
-}
 
 /* ---------- Overlays ---------- */
 .overlay-backdrop {
@@ -953,6 +916,11 @@ button {
   border: none;
   font-size: 18px;
   color: var(--text-soft);
+}
+
+.summary-badge {
+  font-size: 42px;
+  margin-bottom: 14px;
 }
 
 /* ---------- Bottom nav ---------- */

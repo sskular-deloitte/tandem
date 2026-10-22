@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { useIdentity } from "@/lib/useIdentity";
 import { editItem, fetchItems, respondToItem, shareItem } from "@/lib/api";
 import type { Item, ItemState, OwnershipResponse } from "@/lib/types";
@@ -19,31 +18,12 @@ const SECTIONS: {
   label: string;
   dot: string;
   empty: string;
-  emptyImage?: string;
 }[] = [
-  {
-    key: "on_my_mind",
-    label: "On my mind",
-    dot: "#C9BFB3",
-    empty: "Nothing private right now.",
-    emptyImage: "/brand/thinking-alone.webp",
-  },
+  { key: "on_my_mind", label: "On my mind", dot: "#C9BFB3", empty: "Nothing private right now." },
   { key: "shared", label: "Shared", dot: "var(--tertiary)", empty: "Nothing freshly shared." },
-  {
-    key: "needs_agreement",
-    label: "Needs agreement",
-    dot: "var(--accent)",
-    empty: "Nothing waiting on agreement.",
-    emptyImage: "/brand/untangling-together.webp",
-  },
+  { key: "needs_agreement", label: "Needs agreement", dot: "var(--accent)", empty: "Nothing waiting on agreement." },
   { key: "agreed", label: "Agreed / Planned", dot: "var(--sage-dark)", empty: "Nothing agreed yet." },
-  {
-    key: "resolved",
-    label: "Resolved",
-    dot: "var(--sage)",
-    empty: "Nothing resolved yet.",
-    emptyImage: "/brand/arrived-together.webp",
-  },
+  { key: "resolved", label: "Resolved", dot: "var(--sage)", empty: "Nothing resolved yet." },
 ];
 
 export default function AppPage() {
@@ -158,18 +138,7 @@ export default function AppPage() {
                 {section.label} ({sectionItems.length})
               </div>
               {sectionItems.length === 0 && (
-                <div className="empty-note-row">
-                  {section.emptyImage && (
-                    <Image
-                      src={section.emptyImage}
-                      alt=""
-                      width={900}
-                      height={506}
-                      className="empty-note-image"
-                    />
-                  )}
-                  <div className="empty-note">{section.empty}</div>
-                </div>
+                <div className="empty-note">{section.empty}</div>
               )}
               {sectionItems.map((item) => (
                 <ItemCard

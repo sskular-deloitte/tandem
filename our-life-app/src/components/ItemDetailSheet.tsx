@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import type { Item, OwnershipResponse } from "@/lib/types";
 import { Icon } from "@/components/Icon";
 
@@ -137,27 +136,17 @@ export function ItemDetailSheet({
         )}
 
         {item.state === "needs_agreement" && (
-          <div style={{ marginTop: 14 }}>
-            <Image
-              src="/brand/untangling-together.webp"
-              alt=""
-              width={900}
-              height={506}
-              className="brand-inline"
-              style={{ maxWidth: 160, marginBottom: 10 }}
-            />
-            <div className="respond-grid">
-              {RESPONSES.map((r) => (
-                <button
-                  key={r.value}
-                  className="respond-btn"
-                  disabled={busy}
-                  onClick={() => handleRespond(r.value)}
-                >
-                  <Icon name={r.icon} size={16} /> {r.label}
-                </button>
-              ))}
-            </div>
+          <div className="respond-grid" style={{ marginTop: 14 }}>
+            {RESPONSES.map((r) => (
+              <button
+                key={r.value}
+                className="respond-btn"
+                disabled={busy}
+                onClick={() => handleRespond(r.value)}
+              >
+                <Icon name={r.icon} size={16} /> {r.label}
+              </button>
+            ))}
           </div>
         )}
       </div>
