@@ -6,6 +6,8 @@ import { useIdentity } from "@/lib/useIdentity";
 import { createItem, structureText } from "@/lib/api";
 import type { AiSuggestion, SuggestedOwner } from "@/lib/types";
 import { USER_LABELS, otherUser } from "@/lib/types";
+import { Icon } from "@/components/Icon";
+import { BottomNav } from "@/components/BottomNav";
 
 type Step = "write" | "share" | "thinking" | "suggest";
 
@@ -84,7 +86,7 @@ function CaptureWizard() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-5 py-16">
+    <main className="min-h-screen flex items-center justify-center px-5 py-16 pb-28">
       <div className="w-full max-w-[560px]">
         {step === "write" && (
           <>
@@ -135,7 +137,9 @@ function CaptureWizard() {
                 className="card choice-card"
                 onClick={() => choosePrivacy(true)}
               >
-                <div className="choice-icon">🔒</div>
+                <div className="choice-icon">
+                  <Icon name="lock" size={26} />
+                </div>
                 <div className="choice-title">Keep private</div>
                 <div className="choice-sub">Only visible to you</div>
               </div>
@@ -143,7 +147,9 @@ function CaptureWizard() {
                 className="card choice-card"
                 onClick={() => choosePrivacy(false)}
               >
-                <div className="choice-icon">🤝</div>
+                <div className="choice-icon">
+                  <Icon name="diversity_1" size={26} />
+                </div>
                 <div className="choice-title">Share now</div>
                 <div className="choice-sub">Visible to you both</div>
               </div>
@@ -169,7 +175,10 @@ function CaptureWizard() {
 
             {step === "suggest" && suggestion && (
               <div className="card" style={{ padding: 26 }}>
-                <div className="ai-tag">✨ AI suggested — not a fact</div>
+                <div className="ai-tag">
+                  <Icon name="auto_awesome" size={14} filled />
+                  AI suggested — not a fact
+                </div>
 
                 <EditableField
                   label="Suggested outcome"
@@ -225,6 +234,7 @@ function CaptureWizard() {
           </>
         )}
       </div>
+      <BottomNav />
     </main>
   );
 }
@@ -241,7 +251,10 @@ function EditableField({
   return (
     <div className="sug-field">
       <div className="sug-label">
-        {label} <span className="pencil">✎ edit</span>
+        {label}{" "}
+        <span className="pencil">
+          <Icon name="edit" size={13} /> edit
+        </span>
       </div>
       <textarea
         className="sug-value"

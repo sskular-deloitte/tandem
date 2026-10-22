@@ -1,6 +1,7 @@
 "use client";
 
 import type { Item } from "@/lib/types";
+import { Icon } from "@/components/Icon";
 
 const PILL_CLASS: Record<Item["state"], string> = {
   on_my_mind: "pill-onmymind",
@@ -15,7 +16,7 @@ const PILL_LABEL: Record<Item["state"], string> = {
   shared: "Shared",
   needs_agreement: "Needs agreement",
   agreed: "Agreed",
-  resolved: "Resolved ✓",
+  resolved: "Resolved",
 };
 
 export function ItemCard({
@@ -45,6 +46,7 @@ export function ItemCard({
       </div>
       <span className={`pill ${PILL_CLASS[item.state]}`}>
         {PILL_LABEL[item.state]}
+        {item.state === "resolved" && <Icon name="check" size={13} />}
       </span>
     </div>
   );

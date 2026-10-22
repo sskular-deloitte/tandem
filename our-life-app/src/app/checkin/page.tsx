@@ -6,6 +6,7 @@ import { useIdentity } from "@/lib/useIdentity";
 import { fetchItems, respondToItem, resolveItem } from "@/lib/api";
 import type { Item, OwnershipResponse } from "@/lib/types";
 import { useToast } from "@/components/Toast";
+import { Icon } from "@/components/Icon";
 
 const PILL_CLASS: Record<Item["state"], string> = {
   on_my_mind: "pill-onmymind",
@@ -20,7 +21,7 @@ const PILL_LABEL: Record<Item["state"], string> = {
   shared: "Shared",
   needs_agreement: "Needs agreement",
   agreed: "Agreed",
-  resolved: "Resolved ✓",
+  resolved: "Resolved",
 };
 
 function promptFor(item: Item): string {
@@ -116,7 +117,7 @@ export default function CheckinPage() {
           style={{ left: 20, right: "auto" }}
           onClick={() => router.push("/app")}
         >
-          ✕
+          <Icon name="close" size={18} />
         </button>
         {!isDone ? (
           <>
@@ -150,6 +151,7 @@ export default function CheckinPage() {
                 style={{ display: "inline-block", marginBottom: 12 }}
               >
                 {PILL_LABEL[current.state]}
+                {current.state === "resolved" && <Icon name="check" size={13} />}
               </div>
               <div className="ci-outcome">
                 {current.state === "resolved"
@@ -191,7 +193,7 @@ export default function CheckinPage() {
                   style={{ width: "100%" }}
                   onClick={() => handleAction("next")}
                 >
-                  Nice ✓ — Next
+                  <Icon name="check" size={16} /> Nice — Next
                 </button>
               )}
             </div>
@@ -199,8 +201,10 @@ export default function CheckinPage() {
 
           {isDone && (
             <div className="card ci-card text-center">
-              <div className="summary-badge">🌿</div>
-              <h3 className="text-xl font-extrabold mb-2">
+              <div className="summary-badge">
+                <Icon name="spa" size={42} filled />
+              </div>
+              <h3 className="text-xl font-bold mb-2">
                 You reviewed {reviewed} thing{reviewed === 1 ? "" : "s"} together
               </h3>
               <p className="text-[var(--text-soft)] text-sm mb-[22px]">

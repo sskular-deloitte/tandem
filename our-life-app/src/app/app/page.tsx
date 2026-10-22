@@ -10,6 +10,7 @@ import { ItemCard } from "@/components/ItemCard";
 import { NegotiationSheet } from "@/components/NegotiationSheet";
 import { ResolvedModal } from "@/components/ResolvedModal";
 import { useToast } from "@/components/Toast";
+import { BottomNav } from "@/components/BottomNav";
 
 const POLL_MS = 3000;
 
@@ -20,7 +21,7 @@ const SECTIONS: {
   empty: string;
 }[] = [
   { key: "on_my_mind", label: "On my mind", dot: "#C9BFB3", empty: "Nothing private right now." },
-  { key: "shared", label: "Shared", dot: "var(--amber)", empty: "Nothing freshly shared." },
+  { key: "shared", label: "Shared", dot: "var(--tertiary)", empty: "Nothing freshly shared." },
   { key: "needs_agreement", label: "Needs agreement", dot: "var(--accent)", empty: "Nothing waiting on agreement." },
   { key: "agreed", label: "Agreed / Planned", dot: "var(--sage-dark)", empty: "Nothing agreed yet." },
   { key: "resolved", label: "Resolved", dot: "var(--sage)", empty: "Nothing resolved yet." },
@@ -82,7 +83,7 @@ export default function AppPage() {
   }
 
   return (
-    <main className="min-h-screen px-5 py-8">
+    <main className="min-h-screen px-5 py-8 pb-28">
       <div className="w-full max-w-[760px] mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2.5">
@@ -90,7 +91,7 @@ export default function AppPage() {
               {USER_INITIAL[userId]}
             </div>
             <div>
-              <div className="font-extrabold text-[15px]">
+              <div className="font-bold text-[15px]">
                 {USER_LABELS[userId]}
               </div>
               <div className="text-xs text-[var(--text-soft)]">
@@ -99,18 +100,6 @@ export default function AppPage() {
             </div>
           </div>
           <div className="flex gap-2.5 flex-wrap justify-end">
-            <button
-              className="btn btn-ghost btn-sm"
-              onClick={() => router.push(`/capture?n=${Date.now()}`)}
-            >
-              + New
-            </button>
-            <button
-              className="btn btn-primary btn-sm"
-              onClick={() => router.push("/checkin")}
-            >
-              Start check-in
-            </button>
             <button
               className="btn btn-ghost btn-sm"
               onClick={async () => {
@@ -173,6 +162,7 @@ export default function AppPage() {
       {resolvedItem && (
         <ResolvedModal item={resolvedItem} onClose={() => setResolvedItem(null)} />
       )}
+      <BottomNav />
     </main>
   );
 }

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useIdentity } from "@/lib/useIdentity";
 import type { UserId } from "@/lib/types";
 import { useEffect } from "react";
+import { Icon } from "@/components/Icon";
 
 const IDENTITIES: {
   id: UserId;
@@ -35,6 +36,10 @@ export default function HomePage() {
   return (
     <main className="min-h-screen flex items-center justify-center px-5 py-16">
       <div className="w-full max-w-[560px] text-center">
+        <div className="flex items-center justify-center gap-2 mb-6 text-[var(--accent)]">
+          <Icon name="spa" size={22} filled />
+          <span className="font-semibold text-[var(--text)]">Our Life</span>
+        </div>
         <div className="eyebrow">Welcome back</div>
         <h1 className="page-title">Who&apos;s using this?</h1>
         <p className="page-subtitle">No password needed — just pick yourself.</p>

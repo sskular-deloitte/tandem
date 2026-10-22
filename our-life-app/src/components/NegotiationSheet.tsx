@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import type { Item, OwnershipResponse } from "@/lib/types";
+import { Icon } from "@/components/Icon";
 
-const RESPONSES: { value: OwnershipResponse; label: string }[] = [
-  { value: "take", label: "I'll take this" },
-  { value: "together", label: "Let's do it together" },
-  { value: "discuss", label: "Can we discuss it?" },
-  { value: "not_now", label: "Not now" },
+const RESPONSES: { value: OwnershipResponse; label: string; icon: string }[] = [
+  { value: "take", label: "I'll take this", icon: "pan_tool" },
+  { value: "together", label: "Let's do it together", icon: "diversity_1" },
+  { value: "discuss", label: "Can we discuss it?", icon: "chat_bubble" },
+  { value: "not_now", label: "Not now", icon: "bedtime" },
 ];
 
 export function NegotiationSheet({
@@ -59,7 +60,7 @@ export function NegotiationSheet({
               disabled={busy}
               onClick={() => handleRespond(r.value)}
             >
-              {r.label}
+              <Icon name={r.icon} size={16} /> {r.label}
             </button>
           ))}
         </div>

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useIdentity } from "@/lib/useIdentity";
 import { ONBOARDING_QUESTIONS } from "@/lib/onboardingQuestions";
+import { BottomNav } from "@/components/BottomNav";
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -58,7 +59,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-5 py-16">
+    <main className="min-h-screen flex items-center justify-center px-5 py-16 pb-28">
       <div className="w-full max-w-[560px]">
         <div className="ob-dots">
           {ONBOARDING_QUESTIONS.map((q, i) => (
@@ -87,6 +88,7 @@ export default function OnboardingPage() {
           </div>
         </div>
       </div>
+      <BottomNav />
     </main>
   );
 }
