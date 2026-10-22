@@ -4,14 +4,13 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useIdentity } from "@/lib/useIdentity";
 import { ONBOARDING_QUESTIONS } from "@/lib/onboardingQuestions";
-import { Button } from "@/components/ui/button";
-import { USER_LABELS } from "@/lib/types";
 
 export default function OnboardingPage() {
   const router = useRouter();
   const { userId, loaded } = useIdentity();
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [value, setValue] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -38,9 +37,10 @@ export default function OnboardingPage() {
     }
   }
 
-  function next(value: string) {
+  function advance() {
     const updated = { ...answers, [question.key]: value };
     setAnswers(updated);
+    setValue("");
     if (isLast) {
       finish(updated);
     } else {
@@ -49,6 +49,7 @@ export default function OnboardingPage() {
   }
 
   function skip() {
+    setValue("");
     if (isLast) {
       finish(answers);
     } else {
@@ -57,74 +58,35 @@ export default function OnboardingPage() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-stone-50 px-4">
-      <div className="max-w-md w-full space-y-6">
-        <div className="text-center space-y-1">
-          <p className="text-sm text-stone-400">
-            Hi {USER_LABELS[userId]} — getting to know your household
-          </p>
-          <div className="flex justify-center gap-1 pt-1">
-            {ONBOARDING_QUESTIONS.map((q, i) => (
-              <div
-                key={q.key}
-                className={`h-1.5 w-6 rounded-full ${
-                  i <= step ? "bg-stone-800" : "bg-stone-200"
-                }`}
-              />
-            ))}
-          </div>
+    <main className="min-h-screen flex items-center justify-center px-5 py-16">
+      <div className="w-full max-w-[560px]">
+        <div className="ob-dots">
+          {ONBOARDING_QUESTIONS.map((q, i) => (
+            <div key={q.key} className={`ob-dot ${i <= step ? "on" : ""}`} />
+          ))}
         </div>
 
-        <OnboardingForm
-          key={question.key}
-          question={question}
-          onSubmit={next}
-          onSkip={skip}
-          saving={saving}
-          isLast={isLast}
-        />
+        <div className="card ob-card">
+          <div className="ob-q">{question.label}</div>
+          <textarea
+            key={question.key}
+            autoFocus
+            rows={2}
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            placeholder="Type an answer, or just skip..."
+            className="ob-input"
+          />
+          <div className="ob-actions">
+            <button className="btn-text" onClick={skip} disabled={saving}>
+              Skip
+            </button>
+            <button className="btn btn-primary" onClick={advance} disabled={saving}>
+              {isLast ? "Let's go" : "Next"}
+            </button>
+          </div>
+        </div>
       </div>
     </main>
-  );
-}
-
-function OnboardingForm({
-  question,
-  onSubmit,
-  onSkip,
-  saving,
-  isLast,
-}: {
-  question: { key: string; label: string; placeholder: string };
-  onSubmit: (value: string) => void;
-  onSkip: () => void;
-  saving: boolean;
-  isLast: boolean;
-}) {
-  const [value, setValue] = useState("");
-
-  return (
-    <div className="bg-white rounded-2xl border border-stone-200 p-6 space-y-4">
-      <p className="text-lg font-medium text-stone-900">{question.label}</p>
-      <textarea
-        autoFocus
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        placeholder={question.placeholder}
-        rows={3}
-        className="w-full rounded-xl border border-stone-200 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-stone-300 resize-none"
-      />
-      <div className="flex justify-between gap-2">
-        <Button variant="ghost" onClick={onSkip} disabled={saving}>
-          Skip
-        </Button>
-        <Button
-          onClick={() => onSubmit(value)}
-          disabled={saving || !value.trim()}
-        >
-          {isLast ? "Finish" : "Next"}
-        </Button>
-      </div>
-    </div>
   );
 }

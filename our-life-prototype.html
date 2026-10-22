@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Our Life — Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FBF5EF;
+    --bg-deep:#F4EAE0;
+    --card:#FFFFFF;
+    --text:#453B33;
+    --text-soft:#8C7E72;
+    --line:#ECE1D5;
+    --accent:#D97757;
+    --accent-dark:#C15F40;
+    --accent-soft:#F6DED1;
+    --sage:#8FA888;
+    --sage-dark:#5F7A58;
+    --sage-soft:#E3ECE0;
+    --amber:#C99A2E;
+    --amber-soft:#FBEFD2;
+    --grey-pill:#EDE6DD;
+    --shadow: 0 10px 30px -12px rgba(69,59,51,0.18);
+    --shadow-lg: 0 20px 50px -16px rgba(69,59,51,0.28);
+    --radius: 22px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Nunito', sans-serif;
+    background: radial-gradient(circle at 20% 0%, #FDF9F4 0%, var(--bg) 55%, var(--bg-deep) 100%);
+    color:var(--text);
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+  h1,h2,h3{font-weight:800; margin:0;}
+  p{margin:0;}
+  button{font-family:inherit; cursor:pointer;}
+
+  /* ---------- Top chrome: progress dots + restart ---------- */
+  #chrome{
+    position:fixed; top:0; left:0; right:0; z-index:50;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 22px;
+    background:rgba(251,245,239,0.75);
+    backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line);
+  }
+  #brand{display:flex; align-items:center; gap:8px; font-weight:800; color:var(--accent-dark); font-size:15px;}
+  #brand svg{display:block;}
+  #dots{display:flex; gap:9px;}
+  .dot{
+    width:9px;height:9px;border-radius:50%; background:var(--line); cursor:pointer;
+    transition:all .25s ease; border:none; padding:0;
+  }
+  .dot.active{background:var(--accent); width:22px; border-radius:6px;}
+  .dot.done{background:var(--accent-soft);}
+  #restart{
+    border:1px solid var(--line); background:var(--card); color:var(--text-soft);
+    font-size:12px; font-weight:700; padding:7px 14px; border-radius:999px;
+    transition:all .2s ease;
+  }
+  #restart:hover{color:var(--accent-dark); border-color:var(--accent-soft); background:var(--accent-soft);}
+
+  /* ---------- Screens ---------- */
+  #app{padding-top:64px; min-height:100vh; position:relative;}
+  .screen{display:none; min-height:calc(100vh - 64px); align-items:center; justify-content:center; padding:32px 20px 60px;}
+  .screen.active{display:flex; animation:fadeSlideUp .5s ease both;}
+  .screen-inner{width:100%; max-width:560px;}
+  .screen-inner.wide{max-width:760px;}
+
+  .eyebrow{color:var(--accent-dark); font-weight:800; font-size:13px; letter-spacing:.04em; text-transform:uppercase; margin-bottom:10px;}
+  .title{font-size:30px; line-height:1.25; margin-bottom:10px;}
+  .subtitle{color:var(--text-soft); font-size:16px; line-height:1.5; margin-bottom:28px;}
+
+  .btn{
+    border:none; border-radius:999px; padding:15px 26px; font-weight:800; font-size:15px;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+  }
+  .btn-primary{background:var(--accent); color:#fff; box-shadow:var(--shadow);}
+  .btn-primary:hover{transform:translateY(-2px); box-shadow:var(--shadow-lg);}
+  .btn-primary:disabled{opacity:.5; cursor:not-allowed; transform:none;}
+  .btn-ghost{background:transparent; color:var(--text-soft); border:1px solid var(--line);}
+  .btn-ghost:hover{color:var(--text); border-color:var(--text-soft);}
+  .btn-text{background:none; border:none; color:var(--text-soft); font-weight:700; text-decoration:underline; text-underline-offset:3px;}
+  .btn-text:hover{color:var(--accent-dark);}
+
+  .card{background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); border:1px solid var(--line);}
+
+  /* ---------- Staggered entrance ---------- */
+  .stagger-item{opacity:0;}
+  .stagger-item.run{animation:fadeSlideUp .5s ease forwards;}
+
+  @keyframes fadeSlideUp{ from{opacity:0; transform:translateY(16px);} to{opacity:1; transform:translateY(0);} }
+  @keyframes fadeIn{ from{opacity:0;} to{opacity:1;} }
+  @keyframes popIn{ from{opacity:0; transform:scale(.9);} to{opacity:1; transform:scale(1);} }
+  @keyframes slideUpSheet{ from{transform:translateY(100%);} to{transform:translateY(0);} }
+  @keyframes slideDownSheet{ from{transform:translateY(0); opacity:1;} to{transform:translateY(40px); opacity:0;} }
+  @keyframes pulseGlow{ 0%{box-shadow:0 0 0 0 rgba(217,119,87,.35);} 70%{box-shadow:0 0 0 16px rgba(217,119,87,0);} 100%{box-shadow:0 0 0 0 rgba(217,119,87,0);} }
+  @keyframes dotPulse{ 0%,80%,100%{opacity:.3; transform:scale(.75);} 40%{opacity:1; transform:scale(1);} }
+  @keyframes bloom{ 0%{transform:scale(.5); opacity:0;} 55%{opacity:.55;} 100%{transform:scale(1.8); opacity:0;} }
+  @keyframes checkPop{ 0%{transform:scale(0) rotate(-10deg); opacity:0;} 60%{transform:scale(1.15) rotate(3deg); opacity:1;} 100%{transform:scale(1) rotate(0); opacity:1;} }
+  @keyframes slideLeftOut{ to{transform:translateX(-36px); opacity:0;} }
+  @keyframes slideRightIn{ from{transform:translateX(36px); opacity:0;} to{transform:translateX(0); opacity:1;} }
+  @keyframes slideRightOut{ to{transform:translateX(36px); opacity:0;} }
+  @keyframes slideLeftIn{ from{transform:translateX(-36px); opacity:0;} to{transform:translateX(0); opacity:1;} }
+  @keyframes toastIn{ from{opacity:0; transform:translate(-50%,12px);} to{opacity:1; transform:translate(-50%,0);} }
+
+  /* ---------- Screen 1: Identity ---------- */
+  .identity-row{display:flex; gap:18px; justify-content:center; flex-wrap:wrap;}
+  .id-card{
+    width:190px; padding:30px 18px; text-align:center; cursor:pointer;
+    border:2px solid transparent;
+  }
+  .id-card:hover{transform:translateY(-4px); box-shadow:var(--shadow-lg); border-color:var(--accent-soft);}
+  .id-avatar{
+    width:72px; height:72px; border-radius:50%; margin:0 auto 16px;
+    display:flex; align-items:center; justify-content:center; font-size:26px; font-weight:800; color:#fff;
+  }
+  .avatar-william{background:linear-gradient(135deg,#D97757,#C15F40);}
+  .avatar-sam{background:linear-gradient(135deg,#8FA888,#5F7A58);}
+  .id-name{font-size:18px; font-weight:800;}
+  .id-sub{font-size:13px; color:var(--text-soft); margin-top:4px;}
+
+  /* ---------- Screen 2: Onboarding ---------- */
+  .ob-dots{display:flex; gap:8px; justify-content:center; margin-bottom:22px;}
+  .ob-dot{width:8px;height:8px;border-radius:50%; background:var(--line); transition:all .3s ease;}
+  .ob-dot.on{background:var(--accent); width:20px; border-radius:5px;}
+  .ob-card{padding:36px 32px;}
+  .ob-q{font-size:21px; font-weight:800; margin-bottom:16px;}
+  .ob-input{
+    width:100%; border:1.5px solid var(--line); border-radius:14px; padding:14px 16px;
+    font-family:inherit; font-size:15px; background:var(--bg); color:var(--text); resize:none;
+    transition:border-color .2s ease;
+  }
+  .ob-input:focus{outline:none; border-color:var(--accent);}
+  .ob-actions{display:flex; justify-content:space-between; align-items:center; margin-top:24px;}
+
+  /* ---------- Screen 3: Capture ---------- */
+  .capture-head{text-align:center; margin-bottom:26px;}
+  .capture-input{
+    width:100%; border:none; border-radius:var(--radius); padding:26px 24px;
+    font-family:inherit; font-size:19px; font-weight:600; color:var(--text);
+    background:var(--card); box-shadow:var(--shadow); resize:none; min-height:90px;
+    transition:box-shadow .2s ease;
+  }
+  .capture-input:focus{outline:none; box-shadow:0 0 0 3px var(--accent-soft), var(--shadow);}
+  .capture-input::placeholder{color:#B7A999; font-weight:600;}
+  .capture-save-row{display:flex; justify-content:center; margin-top:20px;}
+  .hint{text-align:center; color:var(--text-soft); font-size:13px; margin-top:14px;}
+
+  .share-choice{display:flex; gap:16px; margin-top:28px;}
+  .choice-card{
+    flex:1; padding:24px 18px; text-align:center; cursor:pointer; border:2px solid transparent;
+  }
+  .choice-card:hover{border-color:var(--accent-soft); transform:translateY(-3px);}
+  .choice-icon{font-size:26px; margin-bottom:10px;}
+  .choice-title{font-weight:800; font-size:15px;}
+  .choice-sub{font-size:12.5px; color:var(--text-soft); margin-top:4px;}
+
+  /* ---------- Screen 4: AI Suggestion ---------- */
+  .quote-card{padding:18px 20px; font-style:italic; color:var(--text-soft); font-size:15px; margin-bottom:22px; border-left:3px solid var(--accent-soft);}
+  .thinking{display:flex; align-items:center; gap:10px; justify-content:center; padding:40px 0; color:var(--text-soft); font-weight:700;}
+  .think-dots{display:flex; gap:5px;}
+  .think-dots span{width:8px;height:8px;border-radius:50%; background:var(--accent); animation:dotPulse 1.1s infinite ease-in-out;}
+  .think-dots span:nth-child(2){animation-delay:.15s;}
+  .think-dots span:nth-child(3){animation-delay:.3s;}
+
+  .suggestion-card{padding:26px; display:none;}
+  .ai-tag{
+    display:inline-flex; align-items:center; gap:5px; background:var(--accent-soft); color:var(--accent-dark);
+    font-size:11px; font-weight:800; padding:4px 10px; border-radius:999px; text-transform:uppercase; letter-spacing:.03em;
+    margin-bottom:18px;
+  }
+  .sug-field{
+    border:1.5px dashed var(--line); border-radius:14px; padding:14px 16px; margin-bottom:14px;
+    position:relative; transition:border-color .2s ease;
+  }
+  .sug-field:hover{border-color:var(--accent-soft);}
+  .sug-label{font-size:11.5px; font-weight:800; color:var(--text-soft); text-transform:uppercase; letter-spacing:.03em; display:flex; justify-content:space-between; align-items:center;}
+  .sug-value{font-size:15.5px; font-weight:600; margin-top:6px; outline:none;}
+  .sug-value[contenteditable="true"]:focus{color:var(--accent-dark);}
+  .pencil{opacity:.45; font-size:13px;}
+
+  .chip-row{display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;}
+  .chip{
+    padding:8px 14px; border-radius:999px; border:1.5px solid var(--line); background:var(--bg);
+    font-size:13px; font-weight:700; color:var(--text-soft); transition:all .18s ease;
+  }
+  .chip:hover{border-color:var(--accent);}
+  .chip.selected{background:var(--accent); border-color:var(--accent); color:#fff;}
+
+  .confirm-row{margin-top:22px; display:flex; justify-content:center;}
+
+  /* ---------- Screen 5: Inbox ---------- */
+  .inbox-top{display:flex; align-items:center; justify-content:space-between; margin-bottom:24px;}
+  .inbox-user{display:flex; align-items:center; gap:10px;}
+  .mini-avatar{width:36px;height:36px;border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:14px;}
+  .section-label{font-size:13px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; color:var(--text-soft); margin:26px 0 12px; display:flex; align-items:center; gap:8px;}
+  .section-label:first-child{margin-top:0;}
+  .section-dot{width:8px;height:8px;border-radius:50%;}
+  .item-card{
+    padding:18px 20px; margin-bottom:10px; cursor:pointer; display:flex; justify-content:space-between; gap:14px; align-items:center;
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .item-card:hover{transform:translateY(-2px); box-shadow:var(--shadow-lg);}
+  .item-card.flash{animation:pulseGlow 1.4s ease 2;}
+  .item-main .item-outcome{font-weight:700; font-size:15px;}
+  .item-main .item-next{font-size:13px; color:var(--text-soft); margin-top:3px;}
+  .pill{font-size:11.5px; font-weight:800; padding:5px 11px; border-radius:999px; white-space:nowrap;}
+  .pill-onmymind{background:var(--grey-pill); color:var(--text-soft);}
+  .pill-shared{background:var(--amber-soft); color:var(--amber);}
+  .pill-needs{background:var(--accent-soft); color:var(--accent-dark);}
+  .pill-agreed{background:var(--sage-soft); color:var(--sage-dark);}
+  .pill-resolved{background:var(--sage); color:#fff;}
+  .empty-note{font-size:13px; color:var(--text-soft); font-style:italic; padding:4px 2px 2px;}
+
+  /* ---------- Overlays (negotiation / resolved) ---------- */
+  .overlay-backdrop{
+    position:fixed; inset:0; background:rgba(69,59,51,0.38); z-index:80; display:none;
+    align-items:flex-end; justify-content:center; animation:fadeIn .25s ease;
+  }
+  .overlay-backdrop.center{align-items:center;}
+  .overlay-backdrop.show{display:flex;}
+  .sheet{
+    width:100%; max-width:480px; background:var(--card); border-radius:26px 26px 0 0;
+    padding:28px 26px 30px; animation:slideUpSheet .35s cubic-bezier(.2,.9,.3,1);
+    box-shadow:0 -10px 40px rgba(69,59,51,.25);
+  }
+  .sheet.closing{animation:slideDownSheet .25s ease forwards;}
+  .sheet-handle{width:40px;height:4px;background:var(--line); border-radius:999px; margin:0 auto 18px;}
+  .sheet-item{font-size:15px; font-weight:700; margin-bottom:4px;}
+  .sheet-sub{font-size:13px; color:var(--text-soft); margin-bottom:20px;}
+  .respond-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .respond-btn{
+    padding:16px 10px; border-radius:16px; border:1.5px solid var(--line); background:var(--bg);
+    font-weight:800; font-size:13.5px; color:var(--text); transition:all .18s ease; text-align:center;
+  }
+  .respond-btn:hover{border-color:var(--accent); background:var(--accent-soft); transform:translateY(-2px);}
+
+  .modal{
+    width:100%; max-width:420px; background:var(--card); border-radius:26px; padding:36px 30px 30px;
+    text-align:center; animation:popIn .3s cubic-bezier(.2,.9,.3,1); position:relative; overflow:hidden;
+  }
+  .bloom-ring{
+    position:absolute; top:50%; left:50%; width:140px; height:140px; margin:-70px 0 0 -70px;
+    border-radius:50%; background:radial-gradient(circle, var(--accent-soft), transparent 70%);
+    animation:bloom 1.8s ease-out infinite;
+  }
+  .check-badge{
+    width:64px; height:64px; border-radius:50%; background:var(--sage); color:#fff; font-size:28px;
+    display:flex; align-items:center; justify-content:center; margin:0 auto 18px; position:relative; z-index:2;
+    animation:checkPop .5s cubic-bezier(.2,.9,.3,1);
+  }
+  .resolved-text{font-size:16px; font-weight:700; line-height:1.5; position:relative; z-index:2;}
+  .resolved-sub{font-size:13px; color:var(--text-soft); margin-top:10px; position:relative; z-index:2;}
+
+  /* ---------- Toast ---------- */
+  #toast{
+    position:fixed; bottom:30px; left:50%; background:var(--text); color:#fff; padding:13px 22px;
+    border-radius:999px; font-size:13.5px; font-weight:700; z-index:120; display:none;
+    box-shadow:var(--shadow-lg); animation:toastIn .3s ease;
+  }
+
+  /* ---------- Screen 8: Check-in ---------- */
+  #checkin-overlay{position:fixed; inset:0; background:var(--bg); z-index:90; display:none; flex-direction:column;}
+  #checkin-overlay.show{display:flex;}
+  .ci-top{padding:22px 24px 14px; text-align:center; border-bottom:1px solid var(--line); background:var(--card);}
+  .ci-counter{font-size:12.5px; font-weight:800; color:var(--text-soft); text-transform:uppercase; letter-spacing:.04em;}
+  .ci-dots{display:flex; gap:6px; justify-content:center; margin-top:10px;}
+  .ci-dot{width:7px;height:7px;border-radius:50%; background:var(--line);}
+  .ci-dot.on{background:var(--accent);}
+  .ci-dot.pass{background:var(--sage);}
+  .ci-prompt{font-size:20px; font-weight:800; margin-top:10px;}
+  .ci-body{flex:1; display:flex; align-items:center; justify-content:center; padding:30px 20px; overflow:hidden;}
+  .ci-card-wrap{width:100%; max-width:480px;}
+  .ci-card{padding:28px 26px;}
+  .ci-card.slide-left-out{animation:slideLeftOut .25s ease forwards;}
+  .ci-card.slide-right-in{animation:slideRightIn .3s ease forwards;}
+  .ci-card.slide-right-out{animation:slideRightOut .25s ease forwards;}
+  .ci-card.slide-left-in{animation:slideLeftIn .3s ease forwards;}
+  .ci-outcome{font-size:17px; font-weight:800; margin-bottom:6px;}
+  .ci-next{font-size:14px; color:var(--text-soft); margin-bottom:18px;}
+  .ci-close{position:absolute; top:18px; right:20px; background:none; border:none; font-size:18px; color:var(--text-soft);}
+
+  .summary-wrap{text-align:center; max-width:420px; margin:0 auto;}
+  .summary-badge{font-size:42px; margin-bottom:14px;}
+
+  @media (max-width:520px){
+    .id-card{width:150px; padding:22px 12px;}
+    .title{font-size:25px;}
+    .respond-grid{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<div id="chrome">
+  <div id="brand">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 21s-7.5-4.6-10-9.3C0.2 8 2 4 6 4c2.3 0 3.9 1.3 6 3.5C14.1 5.3 15.7 4 18 4c4 0 5.8 4 4 7.7C19.5 16.4 12 21 12 21z" fill="#D97757"/></svg>
+    Our Life
+  </div>
+  <div id="dots"></div>
+  <button id="restart">Restart demo</button>
+</div>
+
+<div id="app">
+
+  <!-- 1. IDENTITY -->
+  <section class="screen" id="screen-identity">
+    <div class="screen-inner" style="text-align:center;">
+      <div class="eyebrow stagger-item" data-i="0">Welcome back</div>
+      <h1 class="title stagger-item" data-i="1">Who's using this?</h1>
+      <p class="subtitle stagger-item" data-i="2">No password needed — just pick yourself.</p>
+      <div class="identity-row stagger-item" data-i="3">
+        <div class="card id-card" data-name="William" data-other="Sam" data-avatar="avatar-william">
+          <div class="id-avatar avatar-william">W</div>
+          <div class="id-name">William</div>
+          <div class="id-sub">Continue as William</div>
+        </div>
+        <div class="card id-card" data-name="Sam" data-other="William" data-avatar="avatar-sam">
+          <div class="id-avatar avatar-sam">S</div>
+          <div class="id-name">Sam</div>
+          <div class="id-sub">Continue as Sam</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. ONBOARDING -->
+  <section class="screen" id="screen-onboarding">
+    <div class="screen-inner">
+      <div class="ob-dots" id="ob-dots"></div>
+      <div class="card ob-card">
+        <div class="ob-q" id="ob-question">—</div>
+        <textarea class="ob-input" id="ob-input" rows="2" placeholder="Type an answer, or just skip..."></textarea>
+        <div class="ob-actions">
+          <button class="btn-text" id="ob-skip">Skip</button>
+          <button class="btn btn-primary" id="ob-next">Next</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. CAPTURE -->
+  <section class="screen" id="screen-capture">
+    <div class="screen-inner">
+      <div class="capture-head">
+        <div class="eyebrow">Hi, <span id="capture-greet-name">there</span></div>
+        <h1 class="title">What's on your mind?</h1>
+      </div>
+      <div id="capture-input-wrap">
+        <textarea class="capture-input" id="capture-input" rows="3" placeholder="e.g. the boiler is making a noise..."></textarea>
+        <div class="capture-save-row">
+          <button class="btn btn-primary" id="capture-save">Save</button>
+        </div>
+        <p class="hint">No category, deadline, or owner needed. Just get it out of your head.</p>
+      </div>
+      <div id="capture-share-wrap" style="display:none;">
+        <p class="subtitle" style="text-align:center; margin-bottom:0;">Keep this to yourself, or let <span id="capture-other-name">your partner</span> see it?</p>
+        <div class="share-choice">
+          <div class="card choice-card stagger-item" data-i="0" id="choice-private">
+            <div class="choice-icon">🔒</div>
+            <div class="choice-title">Keep private</div>
+            <div class="choice-sub">Only visible to you</div>
+          </div>
+          <div class="card choice-card stagger-item" data-i="1" id="choice-share">
+            <div class="choice-icon">🤝</div>
+            <div class="choice-title">Share now</div>
+            <div class="choice-sub">Visible to you both</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. AI SUGGESTION -->
+  <section class="screen" id="screen-suggestion">
+    <div class="screen-inner">
+      <div class="eyebrow">Turning that into a plan</div>
+      <div class="card quote-card" id="sug-quote">"..."</div>
+      <div class="thinking" id="sug-thinking">
+        Thinking it through
+        <span class="think-dots"><span></span><span></span><span></span></span>
+      </div>
+      <div class="card suggestion-card" id="sug-card">
+        <div class="ai-tag">✨ AI suggested — not a fact</div>
+
+        <div class="sug-field">
+          <div class="sug-label">Suggested outcome <span class="pencil">✎ edit</span></div>
+          <div class="sug-value" id="sug-outcome" contenteditable="true"></div>
+        </div>
+        <div class="sug-field">
+          <div class="sug-label">Suggested next step <span class="pencil">✎ edit</span></div>
+          <div class="sug-value" id="sug-next" contenteditable="true"></div>
+        </div>
+        <div class="sug-field">
+          <div class="sug-label">Suggested date <span class="pencil">✎ edit</span></div>
+          <div class="sug-value" id="sug-date" contenteditable="true"></div>
+        </div>
+        <div class="sug-field">
+          <div class="sug-label">Suggested ownership</div>
+          <div class="chip-row" id="sug-chips"></div>
+        </div>
+
+        <div class="confirm-row">
+          <button class="btn btn-primary" id="sug-confirm">Looks good, save it</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. INBOX -->
+  <section class="screen" id="screen-inbox">
+    <div class="screen-inner wide">
+      <div class="inbox-top">
+        <div class="inbox-user">
+          <div class="mini-avatar" id="inbox-avatar">W</div>
+          <div>
+            <div style="font-weight:800; font-size:15px;" id="inbox-name">William</div>
+            <div style="font-size:12px; color:var(--text-soft);">Our shared space</div>
+          </div>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <button class="btn btn-ghost" id="new-concern-btn">+ New</button>
+          <button class="btn btn-primary" id="start-checkin-btn">Start check-in</button>
+        </div>
+      </div>
+      <div id="inbox-sections"></div>
+    </div>
+  </section>
+
+</div>
+
+<!-- Negotiation bottom sheet -->
+<div class="overlay-backdrop" id="negotiation-overlay">
+  <div class="sheet" id="negotiation-sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-item" id="neg-outcome">—</div>
+    <div class="sheet-sub" id="neg-next">—</div>
+    <div class="respond-grid">
+      <button class="respond-btn" data-resp="take">I'll take this</button>
+      <button class="respond-btn" data-resp="together">Let's do it together</button>
+      <button class="respond-btn" data-resp="discuss">Can we discuss it?</button>
+      <button class="respond-btn" data-resp="notnow">Not now</button>
+    </div>
+  </div>
+</div>
+
+<!-- Resolved modal -->
+<div class="overlay-backdrop center" id="resolved-overlay">
+  <div class="modal" id="resolved-modal">
+    <div class="bloom-ring"></div>
+    <button class="ci-close" id="resolved-close">✕</button>
+    <div class="check-badge">✓</div>
+    <div class="resolved-text" id="resolved-text">—</div>
+    <div class="resolved-sub">Resolved together — not just ticked off.</div>
+  </div>
+</div>
+
+<!-- Check-in full screen -->
+<div id="checkin-overlay">
+  <div class="ci-top">
+    <button class="ci-close" id="ci-exit" style="position:absolute; left:20px; top:18px;">✕</button>
+    <div class="ci-counter" id="ci-counter">Item 1 of 1</div>
+    <div class="ci-dots" id="ci-dots"></div>
+    <div class="ci-prompt" id="ci-prompt">What needs a decision this week?</div>
+  </div>
+  <div class="ci-body">
+    <div class="ci-card-wrap">
+      <div class="card ci-card" id="ci-card" style="position:relative;">
+        <!-- filled by JS -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ============== STATE ============== */
+const onboardingQuestions = [
+  "What are your working patterns like?",
+  "Do you have kids at home?",
+  "Any pets to think about?",
+  "Tell us a bit about your home.",
+  "Any vehicles you manage together?"
+];
+
+let idCounter = 100;
+function nextId(){ return idCounter++; }
+
+function seedItems(){
+  return [
+    { id: nextId(), text:"Boiler is making a noise", outcome:"The boiler is checked and either fixed or safely serviced.", next:"Call a Gas Safe engineer to take a look.", date:"This week", ownership:"Not agreed", state:"needs-agreement", private:false },
+    { id: nextId(), text:"Nursery registration for Emma", outcome:"Emma is registered at nursery.", next:"Submit the registration form.", date:"By Friday", ownership:"Together", state:"agreed", private:false },
+    { id: nextId(), text:"Car MOT due", outcome:"The car's MOT is sorted.", next:"—", date:"Done", ownership:"Sam", state:"resolved", private:false, resolution:"MOT sorted — Sam booked the garage and William dropped the car off." },
+    { id: nextId(), text:"Thinking about mum's birthday", outcome:"Mum's birthday is planned.", next:"Decide on a gift together.", date:"Next month", ownership:"Me", state:"private", private:true }
+  ];
+}
+
+const state = {
+  identity:null, otherName:null, avatarClass:null,
+  obIndex:0, obAnswers:[],
+  capturedText:"",
+  privacyChoice:null,
+  suggestion:{ outcome:"", next:"", date:"", ownership:null },
+  items: seedItems(),
+  checkin:{ queue:[], index:0, reviewed:0, resolved:0, dir:1 }
+};
+
+const screenOrder = ["screen-identity","screen-onboarding","screen-capture","screen-suggestion","screen-inbox"];
+const dotLabels = ["Identity","Onboarding","Capture","AI Suggestion","Inbox"];
+
+/* ============== CHROME / NAV ============== */
+const dotsEl = document.getElementById('dots');
+screenOrder.forEach((id,i)=>{
+  const b = document.createElement('button');
+  b.className='dot';
+  b.title = dotLabels[i];
+  b.addEventListener('click', ()=> jumpTo(id));
+  dotsEl.appendChild(b);
+});
+
+function updateDots(activeId){
+  const idx = screenOrder.indexOf(activeId);
+  [...dotsEl.children].forEach((d,i)=>{
+    d.classList.toggle('active', i===idx);
+    d.classList.toggle('done', i<idx);
+  });
+}
+
+function jumpTo(id){
+  if(!state.identity){ pickIdentity('William','Sam','avatar-william'); }
+  if(id==='screen-capture'){ prepCapture(); }
+  if(id==='screen-inbox'){ renderInbox(); }
+  showScreen(id);
+}
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const el = document.getElementById(id);
+  void el.offsetWidth;
+  el.classList.add('active');
+  runStagger(el);
+  updateDots(id);
+  window.scrollTo({top:0});
+}
+
+function runStagger(container){
+  const items = container.querySelectorAll('.stagger-item');
+  items.forEach(node=>{
+    const i = +(node.getAttribute('data-i')||0);
+    node.classList.remove('run');
+    node.style.animationDelay = (i*90)+'ms';
+    void node.offsetWidth;
+    node.classList.add('run');
+  });
+}
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display='block';
+  t.style.animation='none'; void t.offsetWidth; t.style.animation='toastIn .3s ease';
+  clearTimeout(window.__toastT);
+  window.__toastT = setTimeout(()=> t.style.display='none', 2200);
+}
+
+document.getElementById('restart').addEventListener('click', ()=>{
+  state.identity=null; state.otherName=null; state.avatarClass=null;
+  state.obIndex=0; state.obAnswers=[];
+  state.capturedText=""; state.privacyChoice=null;
+  state.suggestion={outcome:"",next:"",date:"",ownership:null};
+  state.items = seedItems();
+  showScreen('screen-identity');
+});
+
+/* ============== 1. IDENTITY ============== */
+document.querySelectorAll('.id-card').forEach(card=>{
+  card.addEventListener('click', ()=>{
+    pickIdentity(card.dataset.name, card.dataset.other, card.dataset.avatar);
+    card.style.transform='scale(.97)';
+    setTimeout(()=>{
+      state.obIndex=0; state.obAnswers=[];
+      renderOnboarding();
+      showScreen('screen-onboarding');
+    }, 140);
+  });
+});
+
+function pickIdentity(name, other, avatarClass){
+  state.identity=name; state.otherName=other; state.avatarClass=avatarClass;
+}
+
+/* ============== 2. ONBOARDING ============== */
+const obDotsEl = document.getElementById('ob-dots');
+function renderOnboardingDots(){
+  obDotsEl.innerHTML='';
+  onboardingQuestions.forEach((_,i)=>{
+    const d=document.createElement('div');
+    d.className='ob-dot'+(i<=state.obIndex?' on':'');
+    obDotsEl.appendChild(d);
+  });
+}
+function renderOnboarding(){
+  renderOnboardingDots();
+  document.getElementById('ob-question').textContent = onboardingQuestions[state.obIndex];
+  document.getElementById('ob-input').value = state.obAnswers[state.obIndex] || "";
+  document.getElementById('ob-next').textContent = state.obIndex === onboardingQuestions.length-1 ? "Let's go" : "Next";
+  const card = document.querySelector('#screen-onboarding .ob-card');
+  card.style.animation='none'; void card.offsetWidth; card.style.animation='fadeSlideUp .35s ease';
+}
+function advanceOnboarding(){
+  state.obAnswers[state.obIndex] = document.getElementById('ob-input').value;
+  if(state.obIndex < onboardingQuestions.length-1){
+    state.obIndex++;
+    renderOnboarding();
+  } else {
+    prepCapture();
+    showScreen('screen-capture');
+  }
+}
+document.getElementById('ob-next').addEventListener('click', advanceOnboarding);
+document.getElementById('ob-skip').addEventListener('click', ()=>{
+  document.getElementById('ob-input').value='';
+  advanceOnboarding();
+});
+
+/* ============== 3. CAPTURE ============== */
+function prepCapture(){
+  document.getElementById('capture-greet-name').textContent = state.identity || 'there';
+  document.getElementById('capture-other-name').textContent = state.otherName || 'your partner';
+  document.getElementById('capture-input').value='';
+  document.getElementById('capture-input-wrap').style.display='block';
+  document.getElementById('capture-share-wrap').style.display='none';
+}
+
+function doSave(){
+  const val = document.getElementById('capture-input').value.trim();
+  state.capturedText = val || "the boiler is making a noise";
+  document.getElementById('capture-input-wrap').style.animation='fadeSlideUp .3s ease reverse';
+  setTimeout(()=>{
+    document.getElementById('capture-input-wrap').style.display='none';
+    const shareWrap = document.getElementById('capture-share-wrap');
+    shareWrap.style.display='block';
+    runStagger(shareWrap);
+  }, 160);
+}
+document.getElementById('capture-save').addEventListener('click', doSave);
+document.getElementById('capture-input').addEventListener('keydown', (e)=>{
+  if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); doSave(); }
+});
+
+document.getElementById('choice-private').addEventListener('click', ()=> choosePrivacy('private'));
+document.getElementById('choice-share').addEventListener('click', ()=> choosePrivacy('shared'));
+
+function choosePrivacy(choice){
+  state.privacyChoice = choice;
+  prepSuggestion();
+  showScreen('screen-suggestion');
+}
+
+/* ============== 4. AI SUGGESTION ============== */
+function prepSuggestion(){
+  document.getElementById('sug-quote').textContent = `"${state.capturedText}"`;
+  document.getElementById('sug-card').style.display='none';
+  document.getElementById('sug-thinking').style.display='flex';
+
+  state.suggestion = {
+    outcome: capitalize(state.capturedText) + " is sorted and no longer on anyone's mind.",
+    next: "Agree on one concrete next step together.",
+    date: "This week",
+    ownership: null
+  };
+
+  setTimeout(()=>{
+    document.getElementById('sug-thinking').style.display='none';
+    const card = document.getElementById('sug-card');
+    card.style.display='block';
+    card.style.animation='none'; void card.offsetWidth; card.style.animation='fadeSlideUp .45s ease';
+
+    document.getElementById('sug-outcome').textContent = state.suggestion.outcome;
+    document.getElementById('sug-next').textContent = state.suggestion.next;
+    document.getElementById('sug-date').textContent = state.suggestion.date;
+
+    const chipsEl = document.getElementById('sug-chips');
+    chipsEl.innerHTML='';
+    const options = ["Me", state.otherName || "You", "Together", "Not agreed"];
+    options.forEach(opt=>{
+      const chip = document.createElement('button');
+      chip.className='chip';
+      chip.textContent = opt;
+      chip.addEventListener('click', ()=>{
+        [...chipsEl.children].forEach(c=>c.classList.remove('selected'));
+        chip.classList.add('selected');
+        state.suggestion.ownership = opt;
+      });
+      chipsEl.appendChild(chip);
+    });
+  }, 1100);
+}
+function capitalize(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+
+document.getElementById('sug-confirm').addEventListener('click', ()=>{
+  state.suggestion.outcome = document.getElementById('sug-outcome').textContent;
+  state.suggestion.next = document.getElementById('sug-next').textContent;
+  state.suggestion.date = document.getElementById('sug-date').textContent;
+
+  const isPrivate = state.privacyChoice === 'private';
+  const newItem = {
+    id: nextId(),
+    text: state.capturedText,
+    outcome: state.suggestion.outcome,
+    next: state.suggestion.next,
+    date: state.suggestion.date,
+    ownership: state.suggestion.ownership || "Not agreed",
+    state: isPrivate ? 'private' : 'needs-agreement',
+    private: isPrivate,
+    justAdded: true
+  };
+  state.items.unshift(newItem);
+  renderInbox();
+  showScreen('screen-inbox');
+});
+
+/* ============== 5. INBOX ============== */
+const sectionDefs = [
+  { key:'private', label:'On my mind', dot:'#C9BFB3', empty:"Nothing private right now." },
+  { key:'shared', label:'Shared', dot:'var(--amber)', empty:"Nothing freshly shared." },
+  { key:'needs-agreement', label:'Needs agreement', dot:'var(--accent)', empty:"Nothing waiting on agreement." },
+  { key:'agreed', label:'Agreed / Planned', dot:'var(--sage-dark)', empty:"Nothing agreed yet." },
+  { key:'resolved', label:'Resolved', dot:'var(--sage)', empty:"Nothing resolved yet." }
+];
+function pillClass(st){
+  return { 'private':'pill-onmymind','shared':'pill-shared','needs-agreement':'pill-needs','agreed':'pill-agreed','resolved':'pill-resolved' }[st];
+}
+function pillLabel(st){
+  return { 'private':'On my mind','shared':'Shared','needs-agreement':'Needs agreement','agreed':'Agreed','resolved':'Resolved ✓' }[st];
+}
+
+function renderInbox(){
+  document.getElementById('inbox-avatar').textContent = (state.identity||'W')[0];
+  document.getElementById('inbox-avatar').className = 'mini-avatar ' + (state.avatarClass || 'avatar-william');
+  document.getElementById('inbox-name').textContent = state.identity || 'William';
+
+  const wrap = document.getElementById('inbox-sections');
+  wrap.innerHTML='';
+  sectionDefs.forEach((sec, si)=>{
+    const items = state.items.filter(it => it.state===sec.key && (!it.private || sec.key==='private'));
+    const label = document.createElement('div');
+    label.className='section-label stagger-item';
+    label.setAttribute('data-i', si);
+    label.innerHTML = `<span class="section-dot" style="background:${sec.dot}"></span>${sec.label} (${items.length})`;
+    wrap.appendChild(label);
+
+    if(items.length===0){
+      const empty = document.createElement('div');
+      empty.className='empty-note stagger-item';
+      empty.setAttribute('data-i', si);
+      empty.textContent = sec.empty;
+      wrap.appendChild(empty);
+    }
+
+    items.forEach((it, ii)=>{
+      const card = document.createElement('div');
+      card.className='card item-card stagger-item'+(it.justAdded?' flash':'');
+      card.setAttribute('data-i', si+ii);
+      card.innerHTML = `
+        <div class="item-main">
+          <div class="item-outcome">${it.outcome}</div>
+          <div class="item-next">${it.state==='resolved' ? (it.resolution||'') : it.next}</div>
+        </div>
+        <span class="pill ${pillClass(it.state)}">${pillLabel(it.state)}</span>
+      `;
+      card.addEventListener('click', ()=>{
+        if(it.state==='needs-agreement'){ openNegotiation(it); }
+        else if(it.state==='resolved'){ openResolved(it); }
+      });
+      wrap.appendChild(card);
+      delete it.justAdded;
+    });
+  });
+  runStagger(document.getElementById('screen-inbox'));
+}
+
+document.getElementById('new-concern-btn').addEventListener('click', ()=>{
+  prepCapture(); showScreen('screen-capture');
+});
+document.getElementById('start-checkin-btn').addEventListener('click', startCheckin);
+
+/* ============== NEGOTIATION SHEET ============== */
+let activeNegotiationId = null;
+function openNegotiation(item){
+  activeNegotiationId = item.id;
+  document.getElementById('neg-outcome').textContent = item.outcome;
+  document.getElementById('neg-next').textContent = item.next;
+  document.getElementById('negotiation-overlay').classList.add('show');
+}
+function closeNegotiation(cb){
+  const sheet = document.getElementById('negotiation-sheet');
+  sheet.classList.add('closing');
+  setTimeout(()=>{
+    document.getElementById('negotiation-overlay').classList.remove('show');
+    sheet.classList.remove('closing');
+    if(cb) cb();
+  }, 230);
+}
+document.getElementById('negotiation-overlay').addEventListener('click', (e)=>{
+  if(e.target.id==='negotiation-overlay') closeNegotiation();
+});
+document.querySelectorAll('.respond-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=> handleResponse(btn.dataset.resp, activeNegotiationId));
+});
+
+function handleResponse(resp, itemId, fromCheckin){
+  const item = state.items.find(i=>i.id===itemId);
+  if(!item) return;
+  if(resp==='take'){ item.ownership='Me'; item.state='agreed'; }
+  else if(resp==='together'){ item.ownership='Together'; item.state='agreed'; }
+  else if(resp==='discuss'){ toast("Noted — flagged to discuss together."); }
+  else if(resp==='notnow'){ toast("No problem — it'll stay visible for later."); }
+
+  if(fromCheckin){
+    return item;
+  } else {
+    closeNegotiation(()=>{
+      if(resp==='take' || resp==='together'){ toast("Agreed — moved to Agreed/Planned."); }
+      renderInbox();
+    });
+  }
+}
+
+/* ============== RESOLVED MODAL ============== */
+function openResolved(item){
+  document.getElementById('resolved-text').textContent = item.resolution || (item.outcome + " ✓");
+  document.getElementById('resolved-overlay').classList.add('show');
+}
+document.getElementById('resolved-close').addEventListener('click', ()=>{
+  document.getElementById('resolved-overlay').classList.remove('show');
+});
+document.getElementById('resolved-overlay').addEventListener('click', (e)=>{
+  if(e.target.id==='resolved-overlay') document.getElementById('resolved-overlay').classList.remove('show');
+});
+
+/* ============== 6. CHECK-IN ============== */
+function startCheckin(){
+  const queue = state.items.filter(it => !it.private);
+  if(queue.length===0){ toast("Nothing to review right now."); return; }
+  state.checkin = { queue, index:0, reviewed:0, resolved:0, dir:1 };
+  document.getElementById('checkin-overlay').classList.add('show');
+  renderCheckinDots();
+  renderCheckinItem(false);
+}
+function renderCheckinDots(){
+  const el = document.getElementById('ci-dots');
+  el.innerHTML='';
+  state.checkin.queue.forEach((_,i)=>{
+    const d=document.createElement('div');
+    d.className='ci-dot'+(i<state.checkin.index?' pass':(i===state.checkin.index?' on':''));
+    el.appendChild(d);
+  });
+}
+function ciPromptFor(item){
+  if(item.state==='needs-agreement') return "What needs a decision this week?";
+  if(item.state==='agreed') return "Here's what's in motion.";
+  if(item.state==='resolved') return "A small win to celebrate.";
+  return "Taking stock.";
+}
+
+function renderCheckinItem(animate){
+  const { queue, index } = state.checkin;
+  if(index >= queue.length){ showCheckinSummary(); return; }
+  const item = queue[index];
+  document.getElementById('ci-counter').textContent = `Item ${index+1} of ${queue.length}`;
+  document.getElementById('ci-prompt').textContent = ciPromptFor(item);
+  renderCheckinDots();
+
+  const cardEl = document.getElementById('ci-card');
+  const build = ()=>{
+    let actionsHtml = '';
+    if(item.state==='needs-agreement'){
+      actionsHtml = `
+        <div class="respond-grid">
+          <button class="respond-btn" data-ci="take">I'll take this</button>
+          <button class="respond-btn" data-ci="together">Let's do it together</button>
+          <button class="respond-btn" data-ci="discuss">Can we discuss it?</button>
+          <button class="respond-btn" data-ci="notnow">Not now</button>
+        </div>`;
+    } else if(item.state==='agreed'){
+      actionsHtml = `<button class="btn btn-primary" data-ci="resolve" style="width:100%;">Mark resolved</button>`;
+    } else if(item.state==='resolved'){
+      actionsHtml = `<button class="btn btn-ghost" data-ci="next" style="width:100%;">Nice ✓ — Next</button>`;
+    }
+    cardEl.innerHTML = `
+      <div class="pill ${pillClass(item.state)}" style="display:inline-block; margin-bottom:12px;">${pillLabel(item.state)}</div>
+      <div class="ci-outcome">${item.state==='resolved' ? (item.resolution||item.outcome) : item.outcome}</div>
+      <div class="ci-next">${item.state==='resolved' ? '' : item.next}</div>
+      ${actionsHtml}
+    `;
+    cardEl.querySelectorAll('[data-ci]').forEach(btn=>{
+      btn.addEventListener('click', ()=> handleCheckinAction(btn.dataset.ci, item));
+    });
+  };
+
+  if(animate){
+    const outClass = state.checkin.dir>0 ? 'slide-left-out' : 'slide-right-out';
+    const inClass = state.checkin.dir>0 ? 'slide-right-in' : 'slide-left-in';
+    cardEl.className = 'card ci-card ' + outClass;
+    setTimeout(()=>{
+      build();
+      cardEl.className = 'card ci-card ' + inClass;
+    }, 230);
+  } else {
+    cardEl.className = 'card ci-card';
+    build();
+  }
+}
+
+function handleCheckinAction(action, item){
+  state.checkin.reviewed++;
+  if(action==='take' || action==='together'){
+    handleResponse(action, item.id, true);
+  } else if(action==='discuss'){
+    toast("Noted — flagged to discuss together.");
+  } else if(action==='notnow'){
+    toast("No problem — revisit later.");
+  } else if(action==='resolve'){
+    item.state='resolved';
+    item.resolution = item.outcome.replace(/\.$/,'') + " — marked resolved during check-in.";
+    state.checkin.resolved++;
+    toast("Resolved — nice work together.");
+  }
+  state.checkin.dir = 1;
+  state.checkin.index++;
+  renderCheckinItem(true);
+}
+
+document.getElementById('ci-exit').addEventListener('click', ()=>{
+  document.getElementById('checkin-overlay').classList.remove('show');
+  renderInbox();
+});
+
+function showCheckinSummary(){
+  const { reviewed, resolved } = state.checkin;
+  document.getElementById('ci-counter').textContent = "All done";
+  document.getElementById('ci-prompt').textContent = "Nice check-in.";
+  document.getElementById('ci-dots').innerHTML='';
+  const cardEl = document.getElementById('ci-card');
+  cardEl.className = 'card ci-card slide-right-in';
+  cardEl.innerHTML = `
+    <div class="summary-wrap">
+      <div class="summary-badge">🌿</div>
+      <h3 style="font-size:20px; margin-bottom:8px;">You reviewed ${reviewed} thing${reviewed===1?'':'s'} together</h3>
+      <p style="color:var(--text-soft); font-size:14px; margin-bottom:22px;">${resolved} resolved this time — the rest are still visible and waiting, no pressure.</p>
+      <button class="btn btn-primary" id="ci-back-inbox">Back to Our Life</button>
+    </div>
+  `;
+  document.getElementById('ci-back-inbox').addEventListener('click', ()=>{
+    document.getElementById('checkin-overlay').classList.remove('show');
+    renderInbox();
+  });
+}
+
+/* ============== INIT ============== */
+showScreen('screen-identity');
+</script>
+</body>
+</html>

@@ -4,34 +4,42 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useIdentity } from "@/lib/useIdentity";
-import { fetchItems } from "@/lib/api";
-import type { Item, ItemState } from "@/lib/types";
-import { USER_LABELS, otherUser } from "@/lib/types";
-import { CaptureForm } from "@/components/CaptureForm";
+import { fetchItems, respondToItem } from "@/lib/api";
+import type { Item, ItemState, OwnershipResponse } from "@/lib/types";
+import { USER_AVATAR_CLASS, USER_INITIAL, USER_LABELS } from "@/lib/types";
 import { ItemCard } from "@/components/ItemCard";
-import { Button } from "@/components/ui/button";
+import { NegotiationSheet } from "@/components/NegotiationSheet";
+import { ResolvedModal } from "@/components/ResolvedModal";
+import { useToast } from "@/components/Toast";
 
 const POLL_MS = 3000;
 
-const GROUPS: { state: ItemState; title: string }[] = [
-  { state: "on_my_mind", title: "On my mind" },
-  { state: "needs_agreement", title: "Needs agreement" },
-  { state: "shared", title: "Shared" },
-  { state: "agreed", title: "Agreed / Planned" },
-  { state: "resolved", title: "Resolved" },
+const SECTIONS: {
+  key: ItemState;
+  label: string;
+  dot: string;
+  empty: string;
+}[] = [
+  { key: "on_my_mind", label: "On my mind", dot: "#C9BFB3", empty: "Nothing private right now." },
+  { key: "shared", label: "Shared", dot: "var(--amber)", empty: "Nothing freshly shared." },
+  { key: "needs_agreement", label: "Needs agreement", dot: "var(--accent)", empty: "Nothing waiting on agreement." },
+  { key: "agreed", label: "Agreed / Planned", dot: "var(--sage-dark)", empty: "Nothing agreed yet." },
+  { key: "resolved", label: "Resolved", dot: "var(--sage)", empty: "Nothing resolved yet." },
 ];
 
 export default function AppPage() {
   const router = useRouter();
   const { userId, clearUserId, loaded } = useIdentity();
+  const toast = useToast();
   const [items, setItems] = useState<Item[]>([]);
-  const [lastSync, setLastSync] = useState<number>(0);
+  const [mountedAt, setMountedAt] = useState<number | null>(null);
+  const [negotiatingItem, setNegotiatingItem] = useState<Item | null>(null);
+  const [resolvedItem, setResolvedItem] = useState<Item | null>(null);
 
   const refresh = useCallback(async () => {
     if (!userId) return;
     const fresh = await fetchItems(userId);
     setItems(fresh);
-    setLastSync(Date.now());
   }, [userId]);
 
   useEffect(() => {
@@ -39,6 +47,10 @@ export default function AppPage() {
       router.replace("/");
     }
   }, [loaded, userId, router]);
+
+  useEffect(() => {
+    setMountedAt(Date.now());
+  }, []);
 
   useEffect(() => {
     if (!userId) return;
@@ -49,34 +61,53 @@ export default function AppPage() {
 
   if (!loaded || !userId) return null;
 
-  function handleItemChange(updated: Item) {
-    setItems((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
+  function handleCardClick(item: Item) {
+    if (item.state === "needs_agreement") {
+      setNegotiatingItem(item);
+    } else if (item.state === "resolved") {
+      setResolvedItem(item);
+    }
   }
 
-  function handleCreated(item: Item) {
-    setItems((prev) => [item, ...prev]);
+  async function handleRespond(response: OwnershipResponse) {
+    if (!negotiatingItem || !userId) return;
+    await respondToItem(negotiatingItem.id, response, userId);
+    if (response === "take" || response === "together") {
+      toast("Agreed — moved to Agreed/Planned.");
+    } else if (response === "discuss") {
+      toast("Noted — flagged to discuss together.");
+    } else if (response === "not_now") {
+      toast("No problem — it'll stay visible for later.");
+    }
+    refresh();
   }
 
   return (
-    <main className="min-h-screen bg-stone-50">
-      <header className="border-b border-stone-200 bg-white sticky top-0 z-10">
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div>
-            <p className="font-semibold text-stone-900">Our Life</p>
-            <p className="text-xs text-stone-400">
-              Signed in as {USER_LABELS[userId]} · partner:{" "}
-              {USER_LABELS[otherUser(userId)]}
-            </p>
+    <main className="min-h-screen px-5 py-8">
+      <div className="w-full max-w-[760px] mx-auto">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2.5">
+            <div className={`mini-avatar ${USER_AVATAR_CLASS[userId]}`}>
+              {USER_INITIAL[userId]}
+            </div>
+            <div>
+              <div className="font-extrabold text-[15px]">
+                {USER_LABELS[userId]}
+              </div>
+              <div className="text-xs text-[var(--text-soft)]">
+                Our shared space
+              </div>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Link href="/checkin">
-              <Button size="sm" variant="secondary">
-                Check-in
-              </Button>
+          <div className="flex gap-2.5 flex-wrap justify-end">
+            <Link href="/capture">
+              <button className="btn btn-ghost btn-sm">+ New</button>
             </Link>
-            <Button
-              size="sm"
-              variant="ghost"
+            <Link href="/checkin">
+              <button className="btn btn-primary btn-sm">Start check-in</button>
+            </Link>
+            <button
+              className="btn btn-ghost btn-sm"
               onClick={async () => {
                 if (!confirm("Reset all demo data for both William and Sam?")) return;
                 await fetch("/api/reset", { method: "POST" });
@@ -84,51 +115,59 @@ export default function AppPage() {
               }}
             >
               Reset demo
-            </Button>
-            <Button size="sm" variant="ghost" onClick={() => { clearUserId(); router.push("/"); }}>
+            </button>
+            <button
+              className="btn btn-ghost btn-sm"
+              onClick={() => {
+                clearUserId();
+                router.push("/");
+              }}
+            >
               Switch
-            </Button>
+            </button>
           </div>
         </div>
-      </header>
 
-      <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
-        <CaptureForm userId={userId} onCreated={handleCreated} />
-
-        <p className="text-[11px] text-stone-400 text-right">
-          Synced {lastSync ? "just now" : "..."}
-        </p>
-
-        {GROUPS.map((group) => {
-          const groupItems = items.filter((i) => i.state === group.state);
-          if (groupItems.length === 0) return null;
+        {SECTIONS.map((section) => {
+          const sectionItems = items
+            .filter((i) => i.state === section.key)
+            .sort((a, b) => b.updatedAt - a.updatedAt);
           return (
-            <section key={group.state} className="space-y-2">
-              <h2 className="text-sm font-medium text-stone-500">
-                {group.title} ({groupItems.length})
-              </h2>
-              <div className="space-y-2">
-                {groupItems
-                  .sort((a, b) => b.updatedAt - a.updatedAt)
-                  .map((item) => (
-                    <ItemCard
-                      key={item.id}
-                      item={item}
-                      viewer={userId}
-                      onChange={handleItemChange}
-                    />
-                  ))}
+            <div key={section.key}>
+              <div className="section-label">
+                <span className="section-dot" style={{ background: section.dot }} />
+                {section.label} ({sectionItems.length})
               </div>
-            </section>
+              {sectionItems.length === 0 && (
+                <div className="empty-note">{section.empty}</div>
+              )}
+              {sectionItems.map((item) => (
+                <ItemCard
+                  key={item.id}
+                  item={item}
+                  justAdded={mountedAt !== null && item.createdAt > mountedAt}
+                  onClick={
+                    item.state === "needs_agreement" || item.state === "resolved"
+                      ? () => handleCardClick(item)
+                      : undefined
+                  }
+                />
+              ))}
+            </div>
           );
         })}
-
-        {items.length === 0 && (
-          <p className="text-center text-sm text-stone-400 py-10">
-            Nothing on your mind yet. Capture something above to get started.
-          </p>
-        )}
       </div>
+
+      {negotiatingItem && (
+        <NegotiationSheet
+          item={negotiatingItem}
+          onRespond={handleRespond}
+          onClose={() => setNegotiatingItem(null)}
+        />
+      )}
+      {resolvedItem && (
+        <ResolvedModal item={resolvedItem} onClose={() => setResolvedItem(null)} />
+      )}
     </main>
   );
 }

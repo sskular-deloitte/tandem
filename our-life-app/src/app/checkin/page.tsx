@@ -2,48 +2,48 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { useIdentity } from "@/lib/useIdentity";
-import { fetchItems } from "@/lib/api";
-import type { Item } from "@/lib/types";
-import { ItemCard } from "@/components/ItemCard";
-import { Button } from "@/components/ui/button";
+import { fetchItems, respondToItem, resolveItem } from "@/lib/api";
+import type { Item, OwnershipResponse } from "@/lib/types";
+import { useToast } from "@/components/Toast";
 
-interface Prompt {
-  title: string;
-  question: string;
-  filter: (item: Item) => boolean;
+const PILL_CLASS: Record<Item["state"], string> = {
+  on_my_mind: "pill-onmymind",
+  shared: "pill-shared",
+  needs_agreement: "pill-needs",
+  agreed: "pill-agreed",
+  resolved: "pill-resolved",
+};
+
+const PILL_LABEL: Record<Item["state"], string> = {
+  on_my_mind: "On my mind",
+  shared: "Shared",
+  needs_agreement: "Needs agreement",
+  agreed: "Agreed",
+  resolved: "Resolved ✓",
+};
+
+function promptFor(item: Item): string {
+  if (item.state === "needs_agreement") return "What needs a decision this week?";
+  if (item.state === "agreed") return "Here's what's in motion.";
+  if (item.state === "resolved") return "A small win to celebrate.";
+  return "Taking stock.";
 }
 
-const PROMPTS: Prompt[] = [
-  {
-    title: "Needs a decision",
-    question: "What needs a decision this week?",
-    filter: (i) => i.state === "needs_agreement",
-  },
-  {
-    title: "Upcoming actions",
-    question: "What's planned and coming up?",
-    filter: (i) => i.state === "agreed",
-  },
-  {
-    title: "Still on someone's mind",
-    question: "Is anything private that should be shared?",
-    filter: (i) => i.state === "on_my_mind",
-  },
-  {
-    title: "Recent wins",
-    question: "What got resolved recently?",
-    filter: (i) => i.state === "resolved",
-  },
-];
+type AnimState = "idle" | "out" | "in";
 
 export default function CheckinPage() {
   const router = useRouter();
   const { userId, loaded } = useIdentity();
-  const [items, setItems] = useState<Item[]>([]);
-  const [step, setStep] = useState(0);
-  const [loadedItems, setLoadedItems] = useState(false);
+  const toast = useToast();
+
+  const [queue, setQueue] = useState<Item[]>([]);
+  const [index, setIndex] = useState(0);
+  const [reviewed, setReviewed] = useState(0);
+  const [resolvedCount, setResolvedCount] = useState(0);
+  const [anim, setAnim] = useState<AnimState>("idle");
+  const [dir, setDir] = useState<1 | -1>(1);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     if (loaded && !userId) {
@@ -53,97 +53,170 @@ export default function CheckinPage() {
 
   useEffect(() => {
     if (!userId) return;
-    fetchItems(userId).then((fresh) => {
-      setItems(fresh);
-      setLoadedItems(true);
+    fetchItems(userId).then((items) => {
+      const nonPrivate = items.filter((i) => !i.private);
+      if (nonPrivate.length === 0) {
+        toast("Nothing to review right now.");
+        router.push("/app");
+        return;
+      }
+      setQueue(nonPrivate);
+      setReady(true);
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
-  if (!loaded || !userId || !loadedItems) return null;
+  if (!loaded || !userId || !ready) return null;
 
-  function handleChange(updated: Item) {
-    setItems((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
+  const isDone = index >= queue.length;
+  const current = !isDone ? queue[index] : null;
+
+  function advance() {
+    setDir(1);
+    setAnim("out");
+    setTimeout(() => {
+      setIndex((i) => i + 1);
+      setAnim("in");
+      setTimeout(() => setAnim("idle"), 300);
+    }, 230);
   }
 
-  const isDone = step >= PROMPTS.length;
+  async function handleAction(action: OwnershipResponse | "resolve" | "next") {
+    if (!current || !userId) return;
+    setReviewed((r) => r + 1);
 
-  if (isDone) {
-    const resolvedCount = items.filter((i) => i.state === "resolved").length;
-    return (
-      <main className="min-h-screen flex items-center justify-center bg-stone-50 px-4">
-        <div className="max-w-md w-full text-center space-y-4 bg-white rounded-2xl border border-stone-200 p-8">
-          <h1 className="text-xl font-semibold text-stone-900">
-            Check-in complete
-          </h1>
-          <p className="text-stone-500 text-sm">
-            You reviewed {PROMPTS.length} areas. {resolvedCount} items are
-            currently resolved.
-          </p>
-          <Link href="/app">
-            <Button>Back to inbox</Button>
-          </Link>
-        </div>
-      </main>
-    );
+    if (action === "take" || action === "together") {
+      await respondToItem(current.id, action, userId);
+      toast(action === "take" ? "Agreed — moved to Agreed/Planned." : "Agreed — moved to Agreed/Planned.");
+    } else if (action === "discuss") {
+      await respondToItem(current.id, "discuss", userId);
+      toast("Noted — flagged to discuss together.");
+    } else if (action === "not_now") {
+      await respondToItem(current.id, "not_now", userId);
+      toast("No problem — revisit later.");
+    } else if (action === "resolve") {
+      const note = `${current.ai?.outcome ?? current.text} — marked resolved during check-in.`;
+      await resolveItem(current.id, note);
+      setResolvedCount((c) => c + 1);
+      toast("Resolved — nice work together.");
+    }
+    advance();
   }
 
-  const prompt = PROMPTS[step];
-  const relevantItems = items.filter(prompt.filter);
+  const slideOutClass = dir > 0 ? "slide-left-out" : "slide-right-out";
+  const slideInClass = dir > 0 ? "slide-right-in" : "slide-left-in";
+  const cardAnimClass =
+    anim === "out" ? slideOutClass : anim === "in" ? slideInClass : "";
 
   return (
-    <main className="min-h-screen bg-stone-50">
-      <header className="border-b border-stone-200 bg-white sticky top-0 z-10">
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-          <p className="font-semibold text-stone-900">Weekly check-in</p>
-          <Link href="/app">
-            <Button size="sm" variant="ghost">
-              Exit
-            </Button>
-          </Link>
-        </div>
-      </header>
+    <div className="fixed inset-0 bg-[var(--bg)] z-[90] flex flex-col">
+      <div className="ci-top">
+        <button
+          className="ci-close"
+          style={{ left: 20, right: "auto" }}
+          onClick={() => router.push("/app")}
+        >
+          ✕
+        </button>
+        {!isDone ? (
+          <>
+            <div className="ci-counter">
+              Item {index + 1} of {queue.length}
+            </div>
+            <div className="ci-dots">
+              {queue.map((_, i) => (
+                <div
+                  key={i}
+                  className={`ci-dot ${i < index ? "pass" : i === index ? "on" : ""}`}
+                />
+              ))}
+            </div>
+            <div className="ci-prompt">{promptFor(current!)}</div>
+          </>
+        ) : (
+          <>
+            <div className="ci-counter">All done</div>
+            <div className="ci-prompt">Nice check-in.</div>
+          </>
+        )}
+      </div>
 
-      <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
-        <div className="flex justify-center gap-1">
-          {PROMPTS.map((_, i) => (
-            <div
-              key={i}
-              className={`h-1.5 w-8 rounded-full ${
-                i <= step ? "bg-stone-800" : "bg-stone-200"
-              }`}
-            />
-          ))}
-        </div>
+      <div className="flex-1 flex items-center justify-center px-5 py-7 overflow-hidden">
+        <div className="w-full max-w-[480px]">
+          {!isDone && current && (
+            <div className={`card ci-card ${cardAnimClass}`}>
+              <div
+                className={`pill ${PILL_CLASS[current.state]}`}
+                style={{ display: "inline-block", marginBottom: 12 }}
+              >
+                {PILL_LABEL[current.state]}
+              </div>
+              <div className="ci-outcome">
+                {current.state === "resolved"
+                  ? current.resolutionNote || current.ai?.outcome || current.text
+                  : current.ai?.outcome || current.text}
+              </div>
+              {current.state !== "resolved" && (
+                <div className="ci-next">{current.ai?.nextStep ?? ""}</div>
+              )}
 
-        <div className="text-center space-y-1">
-          <h2 className="text-lg font-medium text-stone-900">
-            {prompt.question}
-          </h2>
-          <p className="text-xs text-stone-400">{prompt.title}</p>
-        </div>
-
-        <div className="space-y-2">
-          {relevantItems.length === 0 && (
-            <p className="text-center text-sm text-stone-400 py-6">
-              Nothing here right now.
-            </p>
+              {current.state === "needs_agreement" && (
+                <div className="respond-grid">
+                  <button className="respond-btn" onClick={() => handleAction("take")}>
+                    I&apos;ll take this
+                  </button>
+                  <button className="respond-btn" onClick={() => handleAction("together")}>
+                    Let&apos;s do it together
+                  </button>
+                  <button className="respond-btn" onClick={() => handleAction("discuss")}>
+                    Can we discuss it?
+                  </button>
+                  <button className="respond-btn" onClick={() => handleAction("not_now")}>
+                    Not now
+                  </button>
+                </div>
+              )}
+              {current.state === "agreed" && (
+                <button
+                  className="btn btn-primary"
+                  style={{ width: "100%" }}
+                  onClick={() => handleAction("resolve")}
+                >
+                  Mark resolved
+                </button>
+              )}
+              {current.state === "resolved" && (
+                <button
+                  className="btn btn-ghost"
+                  style={{ width: "100%" }}
+                  onClick={() => handleAction("next")}
+                >
+                  Nice ✓ — Next
+                </button>
+              )}
+            </div>
           )}
-          {relevantItems.map((item) => (
-            <ItemCard
-              key={item.id}
-              item={item}
-              viewer={userId}
-              onChange={handleChange}
-            />
-          ))}
-        </div>
 
-        <div className="flex justify-center">
-          <Button onClick={() => setStep((s) => s + 1)}>
-            {step === PROMPTS.length - 1 ? "Finish check-in" : "Next"}
-          </Button>
+          {isDone && (
+            <div className="card ci-card text-center">
+              <div className="summary-badge">🌿</div>
+              <h3 className="text-xl font-extrabold mb-2">
+                You reviewed {reviewed} thing{reviewed === 1 ? "" : "s"} together
+              </h3>
+              <p className="text-[var(--text-soft)] text-sm mb-[22px]">
+                {resolvedCount} resolved this time — the rest are still
+                visible and waiting, no pressure.
+              </p>
+              <button
+                className="btn btn-primary"
+                onClick={() => router.push("/app")}
+              >
+                Back to Our Life
+              </button>
+            </div>
+          )}
         </div>
       </div>
-    </main>
+    </div>
   );
 }

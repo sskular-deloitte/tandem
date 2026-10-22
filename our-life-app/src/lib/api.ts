@@ -1,4 +1,4 @@
-import type { Item, OwnershipResponse, UserId } from "./types";
+import type { AiSuggestion, Item, OwnershipResponse, UserId } from "./types";
 
 export async function fetchItems(userId: UserId): Promise<Item[]> {
   const res = await fetch(`/api/items?userId=${userId}`, { cache: "no-store" });
@@ -7,15 +7,26 @@ export async function fetchItems(userId: UserId): Promise<Item[]> {
   return data.items as Item[];
 }
 
+export async function structureText(text: string): Promise<AiSuggestion> {
+  const res = await fetch("/api/structure", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text }),
+  });
+  const data = await res.json();
+  return data.ai as AiSuggestion;
+}
+
 export async function createItem(
   text: string,
   createdBy: UserId,
-  isPrivate: boolean
+  isPrivate: boolean,
+  ai: AiSuggestion
 ): Promise<Item> {
   const res = await fetch("/api/items", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text, createdBy, isPrivate }),
+    body: JSON.stringify({ text, createdBy, isPrivate, ai }),
   });
   const data = await res.json();
   return data.item as Item;

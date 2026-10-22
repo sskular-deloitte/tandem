@@ -49,3 +49,13 @@ export const USER_LABELS: Record<UserId, string> = {
   william: "William",
   sam: "Sam",
 };
+
+export const USER_AVATAR_CLASS: Record<UserId, string> = {
+  william: "avatar-william",
+  sam: "avatar-sam",
+};
+
+export const USER_INITIAL: Record<UserId, string> = {
+  william: "W",
+  sam: "S",
+};

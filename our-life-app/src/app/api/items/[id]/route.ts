@@ -31,15 +31,11 @@ function applyOwnershipResponse(
         state: "agreed" as ItemState,
       };
     case "discuss":
-      return {
-        ownershipResponse: response,
-        state: "needs_agreement" as ItemState,
-      };
     case "not_now":
-      return {
-        ownershipResponse: response,
-        state: "shared" as ItemState,
-      };
+      // Stays in needs_agreement - these responses acknowledge the item
+      // without resolving ownership, matching the prototype's behaviour of
+      // just showing a toast rather than moving the item.
+      return { ownershipResponse: response };
   }
 }
 

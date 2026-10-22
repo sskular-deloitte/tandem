@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { addItem, getAllItems } from "@/lib/store";
-import { structureEntry } from "@/lib/ai";
-import type { Item, UserId } from "@/lib/types";
+import type { AiSuggestion, Item, UserId } from "@/lib/types";
 
 function visibleTo(items: Item[], userId: UserId): Item[] {
   return items.filter((item) => !item.private || item.createdBy === userId);
@@ -18,20 +17,19 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { text, createdBy, isPrivate } = body as {
+  const { text, createdBy, isPrivate, ai } = body as {
     text: string;
     createdBy: UserId;
     isPrivate: boolean;
+    ai: AiSuggestion;
   };
 
-  if (!text || !createdBy) {
+  if (!text || !createdBy || !ai) {
     return NextResponse.json(
-      { error: "text and createdBy required" },
+      { error: "text, createdBy and ai required" },
       { status: 400 }
     );
   }
-
-  const ai = await structureEntry(text);
 
   const now = Date.now();
   const item: Item = {
@@ -39,7 +37,7 @@ export async function POST(req: NextRequest) {
     text,
     createdBy,
     private: isPrivate,
-    state: isPrivate ? "on_my_mind" : "shared",
+    state: isPrivate ? "on_my_mind" : "needs_agreement",
     ai,
     ownershipResponse: null,
     ownerType: null,
@@ -47,10 +45,6 @@ export async function POST(req: NextRequest) {
     createdAt: now,
     updatedAt: now,
   };
-
-  if (!isPrivate) {
-    item.state = "needs_agreement";
-  }
 
   await addItem(item);
 
